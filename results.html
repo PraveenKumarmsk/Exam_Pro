@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Results &amp; Rankings — ExamPro</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231e3a8a'/%3E%3Cpath d='M9 22V10h13v3h-9v2h8v3h-8v4z' fill='%23fff'/%3E%3Ccircle cx='24' cy='24' r='4' fill='%237c3aed'/%3E%3C/svg%3E" />
+<script>(function(){try{var t=localStorage.getItem('exampro-theme');if(!t&&window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches)t='dark';if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+<link rel="stylesheet" href="shared.css" />
+<link rel="manifest" href="manifest.json" />
+<meta name="theme-color" content="#1e3a8a" />
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+<meta name="mobile-web-app-capable" content="yes" /><meta name="apple-mobile-web-app-capable" content="yes" /><meta name="apple-mobile-web-app-title" content="ExamPro" />
+</head>
+<body data-page="results" data-search="Search exams…">
+
+<div id="site-header"></div>
+
+<div class="page-head">
+  <div class="container">
+    <div class="breadcrumb"><a href="index.html">Home</a> / Results</div>
+    <h1>Results &amp; Rankings</h1>
+    <p>Your test history and — once enough data exists — comparative rankings. Percentile and rank are shown only when statistically meaningful.</p>
+  </div>
+</div>
+
+<section class="block">
+  <div class="container" id="content"></div>
+</section>
+
+<div id="site-footer"></div>
+
+<script src="shared.js"></script>
+<script>
+(function () {
+  const root = document.getElementById('content');
+  const user = getUser();
+  const QMAP = {}; QUESTIONS.forEach(q => QMAP[q.id] = q);
+
+  function pctBadge(p) { return p >= 60 ? 'badge-easy' : p >= 35 ? 'badge-medium' : 'badge-hard'; }
+
+  function render() {
+    const attempts = getAttempts();
+
+    if (!attempts.length) {
+      root.innerHTML = `
+        <div class="empty panel" style="padding:56px 24px">
+          <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 3v18h18"/><path d="m7 14 4-4 4 4 6-6"/></svg>
+          <h3>${user ? 'Hi ' + escapeHtml(user.name) + ', you have no attempts yet' : 'No attempts yet'}</h3>
+          <p>Your test attempts, scores, and analytics appear here after you finish a test.</p>
+          <div class="btn-row">
+            <a href="test-attempt.html?id=1" class="btn btn-primary btn-lg">Start Free Mock Test</a>
+            <a href="practice.html" class="btn btn-outline btn-lg">Practice by Chapter</a>
+            ${user ? '' : '<a href="login.html" class="btn btn-ghost btn-lg">Sign In</a>'}
+          </div>
+        </div>`;
+      return;
+    }
+
+    /* summary */
+    const best = Math.max(...attempts.map(a => Math.round(a.correct / a.total * 100)));
+    let corr = 0, att = 0, secs = 0;
+    attempts.forEach(a => { corr += a.correct; att += a.correct + a.wrong; secs += a.timeSec || 0; });
+    const avgAcc = att ? Math.round(corr / att * 100) : 0;
+
+    /* subject-wise accuracy across all attempts */
+    const subj = {};
+    attempts.forEach(a => (a.qids || []).forEach(id => {
+      const q = QMAP[id]; if (!q) return;
+      const s = subj[q.subject] || (subj[q.subject] = { att: 0, ok: 0 });
+      const sel = a.answers ? a.answers[id] : undefined;
+      if (sel !== undefined) { s.att++; if (sel === q.ans) s.ok++; }
+    }));
+    const subjRows = Object.keys(subj).filter(k => subj[k].att).map(k => {
+      const p = Math.round(subj[k].ok / subj[k].att * 100);
+      return `<div style="margin-bottom:14px">
+        <div style="display:flex;justify-content:space-between;font-size:.86rem"><strong>${escapeHtml(k)}</strong><span style="color:var(--text-muted)">${subj[k].ok}/${subj[k].att} correct · ${p}%</span></div>
+        <div class="rank-bar"><div class="rank-fill" style="width:${p}%"></div></div></div>`;
+    }).join('');
+
+    root.innerHTML = `
+      ${user ? '' : `<div class="info-note"><span>You are not signed in — attempts are saved on this device only. <a href="login.html" style="color:var(--purple-600);font-weight:600">Sign in</a> to keep a profile.</span></div>`}
+
+      <div class="stats-grid" style="margin-bottom:32px">
+        <div class="stat"><div class="num">${attempts.length}</div><div class="lbl">Attempts</div></div>
+        <div class="stat"><div class="num">${best}%</div><div class="lbl">Best Score</div></div>
+        <div class="stat"><div class="num">${avgAcc}%</div><div class="lbl">Avg. Accuracy</div><div class="note">of attempted questions</div></div>
+        <div class="stat"><div class="num">${fmtTime(secs)}</div><div class="lbl">Total Time Practised</div></div>
+      </div>
+
+      <div class="sec-head left" style="margin-bottom:20px">
+        <h2>Your Recent Attempts</h2>
+        <p>Click Review to see every question with the correct answer and explanation.</p>
+      </div>
+      <div class="table-wrap" style="margin-bottom:12px">
+        <table>
+          <thead><tr><th>Test</th><th>Date</th><th>Score</th><th>Accuracy</th><th>Time</th><th></th></tr></thead>
+          <tbody>
+            ${attempts.map(a => {
+              const p = Math.round(a.correct / a.total * 100);
+              const acc = (a.correct + a.wrong) ? Math.round(a.correct / (a.correct + a.wrong) * 100) + '%' : '—';
+              return `<tr>
+                <td><strong>${escapeHtml(a.title)}</strong></td>
+                <td>${escapeHtml(fmtDate(a.date))}</td>
+                <td><span class="badge-pill ${pctBadge(p)}">${a.score} / ${a.max}</span></td>
+                <td>${acc}</td>
+                <td>${fmtTime(a.timeSec || 0)}</td>
+                <td style="display:flex;gap:8px">
+                  <a href="test-result.html?id=${encodeURIComponent(a.id)}" class="btn btn-outline" style="padding:6px 12px;font-size:.8rem">Review</a>
+                  ${a.url ? `<a href="${escapeHtml(a.url)}" class="btn btn-ghost" style="padding:6px 12px;font-size:.8rem">Retake</a>` : ''}
+                </td></tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+      <p style="text-align:right;margin-bottom:32px"><button type="button" class="btn btn-ghost" id="clearHistory" style="font-size:.8rem;color:var(--danger)">Clear history</button></p>
+
+      <div class="sec-head left" style="margin-bottom:20px">
+        <h2>Subject-wise Accuracy</h2>
+        <p>Across all your attempts — focus on the shortest bars first.</p>
+      </div>
+      <div class="panel" style="padding:22px;margin-bottom:32px">${subjRows || '<p style="color:var(--text-muted)">Answer some questions to see your subject-wise accuracy.</p>'}</div>
+
+      <div class="sec-head left" style="margin-bottom:20px">
+        <h2>Rankings</h2>
+        <p>Percentile and rank are shown only after a minimum number of attempts exist on a given test.</p>
+      </div>
+      <div class="empty panel" style="padding:48px 24px">
+        <h3>Not enough comparison data yet</h3>
+        <p>Rankings will appear once more students have completed this test. We don't fabricate percentiles.</p>
+      </div>`;
+
+    document.getElementById('clearHistory').addEventListener('click', () => {
+      if (confirm('Delete all saved attempts from this device? This cannot be undone.')) {
+        store.del('exampro-attempts'); store.del('exampro-wrong'); render();
+        showToast('History cleared');
+      }
+    });
+  }
+  render();
+})();
+</script>
+</body>
+</html>

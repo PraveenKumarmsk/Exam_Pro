@@ -1,0 +1,14 @@
+{
+  "name": "exampro",
+  "version": "4.0.0",
+  "private": true,
+  "description": "ExamPro - exam practice site with student portal, admin dashboard and SQLite backend (no npm dependencies)",
+  "engines": { "node": ">=22.13" },
+  "scripts": {
+    "start": "node server/index.js",
+    "seed": "node server/seed.js",
+    "reset-demo": "node server/seed.js --reset",
+    "purge-demo": "node server/seed.js --purge",
+    "test": "node --test --no-warnings \"test/**/*.test.js\""
+  }
+}

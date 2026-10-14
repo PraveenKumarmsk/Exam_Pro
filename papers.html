@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Previous Year Papers — ExamPro</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231e3a8a'/%3E%3Cpath d='M9 22V10h13v3h-9v2h8v3h-8v4z' fill='%23fff'/%3E%3Ccircle cx='24' cy='24' r='4' fill='%237c3aed'/%3E%3C/svg%3E" />
+<script>(function(){try{var t=localStorage.getItem('exampro-theme');if(!t&&window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches)t='dark';if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+<link rel="stylesheet" href="shared.css" />
+<link rel="manifest" href="manifest.json" />
+<meta name="theme-color" content="#1e3a8a" />
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+<meta name="mobile-web-app-capable" content="yes" /><meta name="apple-mobile-web-app-capable" content="yes" /><meta name="apple-mobile-web-app-title" content="ExamPro" />
+</head>
+<body data-page="papers" data-search="Search papers…">
+
+<div id="site-header"></div>
+
+<div class="page-head">
+  <div class="container">
+    <div class="breadcrumb"><a href="index.html">Home</a> / Previous Year Papers</div>
+    <h1>Previous Year Papers</h1>
+    <p>Year-wise question papers, organised by exam and shift. Papers are added once licensing is confirmed — the listing below shows what is planned.</p>
+  </div>
+</div>
+
+<section class="block">
+  <div class="container">
+    <div class="filters">
+      <select id="pYear" aria-label="Year"><option value="all">All Years</option></select>
+      <select id="pExam" aria-label="Exam"><option value="all">All Exams</option></select>
+      <div class="spacer"></div>
+      <button type="button" class="btn btn-outline" id="pClear">Clear</button>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Year</th><th>Exam</th><th>Paper</th><th>Questions</th><th>Duration</th><th>Status</th></tr>
+        </thead>
+        <tbody id="paperRows"></tbody>
+      </table>
+    </div>
+
+    <div id="paperEmpty" class="empty" style="display:none">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
+      <h3>No papers match</h3>
+      <p>Try clearing filters.</p>
+    </div>
+
+    <p style="margin-top:20px;font-size:.88rem;color:var(--text-muted)">Want to practise now? Try a <a href="tests.html" style="color:var(--purple-600);font-weight:600">mock test</a> or <a href="practice.html" style="color:var(--purple-600);font-weight:600">chapter-wise practice</a>.</p>
+  </div>
+</section>
+
+<div id="site-footer"></div>
+
+<script src="shared.js"></script>
+<script>
+(function () {
+  const pYear = document.getElementById('pYear'), pExam = document.getElementById('pExam');
+  const rows = document.getElementById('paperRows'), emptyEl = document.getElementById('paperEmpty');
+  let textQuery = '';
+
+  [...new Set(PAPERS.map(p => p.year))].sort((a, b) => b - a).forEach(y => pYear.insertAdjacentHTML('beforeend', `<option>${y}</option>`));
+  [...new Set(PAPERS.map(p => p.exam))].forEach(x => pExam.insertAdjacentHTML('beforeend', `<option>${escapeHtml(x)}</option>`));
+
+  function render() {
+    const y = pYear.value, e = pExam.value, q = textQuery.trim().toLowerCase();
+    const list = PAPERS.filter(p =>
+      (y === 'all' || String(p.year) === y) &&
+      (e === 'all' || p.exam === e) &&
+      (!q || (p.exam + ' ' + p.paper + ' ' + p.year).toLowerCase().includes(q)));
+    emptyEl.style.display = list.length ? 'none' : 'block';
+    rows.innerHTML = list.map(p => `
+      <tr>
+        <td><span class="badge-pill badge-info">${p.year}</span></td>
+        <td><strong>${escapeHtml(p.exam)}</strong></td>
+        <td>${escapeHtml(p.paper)}</td>
+        <td>${p.q}</td>
+        <td>${p.dur} min</td>
+        <td><span class="badge-pill badge-premium" title="Added once licensing is confirmed">Coming soon</span></td>
+      </tr>`).join('');
+  }
+  [pYear, pExam].forEach(el => el.addEventListener('change', render));
+  document.getElementById('pClear').addEventListener('click', () => {
+    pYear.value = 'all'; pExam.value = 'all'; textQuery = '';
+    const ns = document.getElementById('navSearch'); if (ns) ns.value = '';
+    render();
+  });
+  window.onNavSearch = v => { textQuery = v; render(); };
+  render();
+})();
+</script>
+</body>
+</html>

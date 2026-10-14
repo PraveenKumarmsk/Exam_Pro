@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Redirecting… — ExamPro</title>
+<script>
+  (function () {
+    var s = location.search, p = new URLSearchParams(s);
+    if (p.get('review')) location.replace('test-result.html?id=' + encodeURIComponent(p.get('review')));
+    else location.replace('test-attempt.html' + s);
+  })();
+</script>
+</head>
+<body>
+  <p style="font-family:sans-serif;padding:24px">Redirecting… <a href="test-attempt.html">Continue to the test page</a></p>
+</body>
+</html>

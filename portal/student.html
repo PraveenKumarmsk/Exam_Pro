@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex">
+<title>Student Portal — ExamPro</title><link rel="stylesheet" href="/portal/portal.css"></head>
+<body class="student">
+<header class="s-top"><div class="in">
+  <a class="logo" href="/student/dashboard"><b>EP</b> Student Portal</a>
+  <nav class="s-nav" aria-label="Student navigation" id="nav">
+    <a href="/student/dashboard" data-v="dashboard">Dashboard</a><a href="/student/exams" data-v="exams">Exams</a>
+    <a href="/student/notifications" data-v="notifications">Notifications <span class="dot hide" id="dot"></span></a>
+    <a href="/student/profile" data-v="profile">Profile</a><a href="/student/settings" data-v="settings">Settings</a>
+  </nav>
+  <div class="grow"></div><span class="small muted" id="who"></span><button class="btn ghost sm" id="logout" type="button">Log out</button>
+</div></header>
+<main class="s-main" id="view" aria-live="polite"></main>
+<script src="/portal/portal.js"></script>
+<script src="/portal/student.js"></script>
+</body></html>

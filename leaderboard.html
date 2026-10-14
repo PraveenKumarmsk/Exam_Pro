@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Leaderboard — ExamPro</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231e3a8a'/%3E%3Cpath d='M9 22V10h13v3h-9v2h8v3h-8v4z' fill='%23fff'/%3E%3Ccircle cx='24' cy='24' r='4' fill='%237c3aed'/%3E%3C/svg%3E" />
+<script>(function(){try{var t=localStorage.getItem('exampro-theme');if(!t&&window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches)t='dark';if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+<link rel="stylesheet" href="shared.css" />
+<link rel="manifest" href="manifest.json" />
+<meta name="theme-color" content="#1e3a8a" />
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+<meta name="mobile-web-app-capable" content="yes" /><meta name="apple-mobile-web-app-capable" content="yes" /><meta name="apple-mobile-web-app-title" content="ExamPro" />
+</head>
+<body data-page="leaderboard" data-search="Search exams…">
+
+<div id="site-header"></div>
+
+<div class="page-head">
+  <div class="container">
+    <div class="breadcrumb"><a href="index.html">Home</a> / Leaderboard</div>
+    <h1>Leaderboard</h1>
+    <p>Rankings of everyone who has practised on this device — handy for classmates or family sharing one computer. A global all-India leaderboard needs a server and will appear once the backend is connected.</p>
+  </div>
+</div>
+
+<section class="block">
+  <div class="container">
+    <div class="filters">
+      <select id="lbTest" aria-label="Test"><option value="all">All tests (overall)</option></select>
+      <div class="tabs" id="lbTabs" style="margin:0">
+        <button type="button" class="tab active" data-tab="score">Top scores</button>
+        <button type="button" class="tab" data-tab="acc">Accuracy</button>
+        <button type="button" class="tab" data-tab="vol">Most questions</button>
+        <button type="button" class="tab" data-tab="streak">Streaks</button>
+      </div>
+    </div>
+    <div id="lbBody"></div>
+  </div>
+</section>
+
+<div id="site-footer"></div>
+
+<script src="shared.js"></script>
+<script>
+(function () {
+  const body = document.getElementById('lbBody');
+  const sel = document.getElementById('lbTest');
+  const me = getUser();
+  const all = getAttempts();
+  let tab = 'score';
+
+  /* group by person: email if known, else name, else "Guest" */
+  function who(a) { const u = a.user; if (u && (u.email || u.name)) return { key: (u.email || u.name).toLowerCase(), name: u.name || u.email }; return { key: 'guest', name: 'Guest' }; }
+  const myKey = me ? (me.email || me.name || '').toLowerCase() : null;
+
+  const titles = [...new Set(all.filter(a => a.testId).map(a => a.title))];
+  titles.forEach(t => sel.insertAdjacentHTML('beforeend', `<option>${escapeHtml(t)}</option>`));
+
+  function medal(i) { return `<span class="medal ${i < 3 ? 'm' + (i + 1) : ''}">${i + 1}</span>`; }
+
+  function table(head, rows, emptyMsg) {
+    if (!rows.length) return `<div class="empty panel"><h3>No rankings yet</h3><p>${emptyMsg || 'Finish a test to appear here.'}</p><div class="btn-row"><a class="btn btn-primary" href="test-attempt.html?id=1">Start a test</a></div></div>`;
+    return `<div class="table-wrap"><table><thead><tr>${head.map(h => `<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.join('')}</tbody></table></div>`;
+  }
+
+  function render() {
+    const pool = sel.value === 'all' ? all : all.filter(a => a.title === sel.value);
+    const people = {};
+    pool.forEach(a => {
+      const w = who(a), p = people[w.key] || (people[w.key] = { key: w.key, name: w.name, att: 0, corr: 0, wrong: 0, best: 0, bestSec: 1e9, secs: 0, pctSum: 0, days: [] });
+      p.att++; p.corr += a.correct; p.wrong += a.wrong; p.secs += a.timeSec || 0;
+      const pct = a.total ? a.correct / a.total * 100 : 0; p.pctSum += pct;
+      if (pct > p.best || (pct === p.best && (a.timeSec || 0) < p.bestSec)) { p.best = pct; p.bestSec = a.timeSec || 0; }
+      p.days.push(a);
+    });
+    const list = Object.values(people);
+    const row = (p, i, cells) => `<tr class="${p.key === myKey ? 'me' : ''}"><td>${medal(i)}</td><td><strong>${escapeHtml(p.name)}</strong>${p.key === myKey ? ' <span class="badge-pill badge-info">You</span>' : ''}</td>${cells}</tr>`;
+
+    if (tab === 'score') {
+      list.sort((a, b) => b.best - a.best || a.bestSec - b.bestSec);
+      body.innerHTML = table(['Rank', 'Name', 'Best score', 'Time', 'Avg. score', 'Attempts'], list.map((p, i) => row(p, i,
+        `<td><span class="badge-pill ${p.best >= 60 ? 'badge-easy' : p.best >= 35 ? 'badge-medium' : 'badge-hard'}">${Math.round(p.best)}%</span></td><td>${fmtTime(p.bestSec)}</td><td>${Math.round(p.pctSum / p.att)}%</td><td>${p.att}</td>`)));
+    } else if (tab === 'acc') {
+      const q = list.filter(p => p.corr + p.wrong >= 5); // need a few answers to be meaningful
+      q.sort((a, b) => b.corr / (b.corr + b.wrong) - a.corr / (a.corr + a.wrong));
+      body.innerHTML = table(['Rank', 'Name', 'Accuracy', 'Correct / Attempted', 'Attempts'], q.map((p, i) => row(p, i,
+        `<td><strong>${Math.round(p.corr / (p.corr + p.wrong) * 100)}%</strong></td><td>${p.corr} / ${p.corr + p.wrong}</td><td>${p.att}</td>`)), 'Accuracy ranks appear once a person has answered at least 5 questions.');
+    } else if (tab === 'vol') {
+      list.sort((a, b) => (b.corr + b.wrong) - (a.corr + a.wrong));
+      body.innerHTML = table(['Rank', 'Name', 'Questions answered', 'Time practised', 'Attempts'], list.map((p, i) => row(p, i,
+        `<td><strong>${p.corr + p.wrong}</strong></td><td>${fmtTime(p.secs)}</td><td>${p.att}</td>`)));
+    } else {
+      list.forEach(p => { p.streak = calcStreak(p.days); });
+      list.sort((a, b) => b.streak.best - a.streak.best || b.streak.current - a.streak.current);
+      body.innerHTML = table(['Rank', 'Name', 'Best streak', 'Current streak', 'Attempts'], list.map((p, i) => row(p, i,
+        `<td><strong>🏆 ${p.streak.best} day${p.streak.best === 1 ? '' : 's'}</strong></td><td>🔥 ${p.streak.current}</td><td>${p.att}</td>`)));
+    }
+    body.insertAdjacentHTML('beforeend', '<p class="small muted" style="margin-top:14px">Scores are percentages of the test total, so tests of different lengths compare fairly. Ties are broken by the faster time. Attempts taken before signing in are grouped under "Guest".</p>');
+  }
+
+  document.getElementById('lbTabs').addEventListener('click', e => {
+    const b = e.target.closest('.tab'); if (!b) return;
+    document.querySelectorAll('#lbTabs .tab').forEach(t => t.classList.remove('active')); b.classList.add('active'); tab = b.dataset.tab; render();
+  });
+  sel.addEventListener('change', render);
+  render();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>ExamPro — Your Government Exam Journey Starts Here</title>
+<meta name="description" content="Practice smarter with exam-wise mock tests, previous year papers, chapter-wise questions, study notes and personalised performance analysis." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231e3a8a'/%3E%3Cpath d='M9 22V10h13v3h-9v2h8v3h-8v4z' fill='%23fff'/%3E%3Ccircle cx='24' cy='24' r='4' fill='%237c3aed'/%3E%3C/svg%3E" />
+<script>(function(){try{var t=localStorage.getItem('exampro-theme');if(!t&&window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches)t='dark';if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+<link rel="stylesheet" href="shared.css" />
+<link rel="manifest" href="manifest.json" />
+<meta name="theme-color" content="#1e3a8a" />
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+<meta name="mobile-web-app-capable" content="yes" /><meta name="apple-mobile-web-app-capable" content="yes" /><meta name="apple-mobile-web-app-title" content="ExamPro" />
+<style>
+  .hero-search { display:flex; gap:10px; margin-bottom:16px; max-width:540px; }
+  .hero-search input { flex:1; padding:14px 16px; border-radius:12px; border:1px solid var(--border); background:var(--bg-card); color:var(--text); font-size:.95rem; outline:none; min-width:0; }
+  .hero-search input:focus { border-color:var(--purple-500); box-shadow:0 0 0 4px color-mix(in srgb,var(--purple-500) 18%,transparent); }
+  .hero-ctas { display:flex; gap:12px; flex-wrap:wrap; margin-bottom:22px; }
+  .popular { display:flex; flex-wrap:wrap; gap:8px; align-items:center; font-size:.82rem; color:var(--text-muted); }
+  .popular span.label { font-weight:600; margin-right:4px; }
+  .chip { padding:5px 11px; border-radius:999px; background:var(--bg-soft); border:1px solid var(--border); font-size:.78rem; color:var(--text); transition:.15s; }
+  .chip:hover { border-color:var(--purple-500); color:var(--purple-600); }
+  .cat-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:14px; }
+  .cat-card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius-sm); padding:16px; display:flex; align-items:center; gap:12px; transition:.15s; }
+  .cat-card:hover { border-color:var(--purple-500); transform:translateY(-2px); }
+  .cat-ico { width:36px; height:36px; border-radius:9px; background:linear-gradient(135deg,var(--navy-700),var(--purple-600)); display:grid; place-items:center; color:#fff; font-size:.95rem; flex-shrink:0; }
+  .cat-card span { font-size:.86rem; font-weight:600; }
+  .qc-actions { display:flex; justify-content:space-between; align-items:center; margin-top:12px; gap:10px; flex-wrap:wrap; }
+  @media (max-width:720px) { .hero-search { flex-direction:column; } }
+</style>
+</head>
+<body data-page="home" data-search="Search exams…">
+
+<div id="site-header"></div>
+
+<!-- ================= HERO ================= -->
+<section class="hero2">
+  <div class="container hero2-grid">
+    <div>
+      <span class="eyebrow">🇮🇳 Built for competitive-exam aspirants</span>
+      <h1>Practise like it's <span class="grad-text">exam day</span>, every day.</h1>
+      <p class="lead">Timed mock tests, chapter-wise practice, study notes and a dashboard that shows exactly what to revise next — for SSC, Railway, Bihar exams, Banking and more.</p>
+
+      <form class="hero-search" id="heroForm">
+        <input type="search" id="heroSearch" placeholder="Search exams like SSC CGL, RRB NTPC…" aria-label="Search exams" />
+        <button type="submit" class="btn btn-primary btn-lg">Search</button>
+      </form>
+
+      <div class="hero-ctas">
+        <a href="test-attempt.html?id=1" class="btn btn-primary btn-lg">Start Free Mock Test</a>
+        <a href="#exams" class="btn btn-outline btn-lg">Explore Exams</a>
+      </div>
+
+      <div class="popular">
+        <span class="label">Popular:</span>
+        <a href="exam-detail.html?exam=SSC%20CGL" class="chip">SSC CGL</a>
+        <a href="exam-detail.html?exam=SSC%20MTS" class="chip">SSC MTS</a>
+        <a href="exam-detail.html?exam=SSC%20GD%20Constable" class="chip">SSC GD</a>
+        <a href="exam-detail.html?exam=RRB%20NTPC" class="chip">Railway NTPC</a>
+        <a href="exam-detail.html?exam=RRB%20Group%20D" class="chip">Railway Group D</a>
+        <a href="exam-detail.html?exam=BPSC%20CCE" class="chip">BPSC</a>
+        <a href="exam-detail.html?exam=Bihar%20Police" class="chip">Bihar Police</a>
+        <a href="exam-detail.html?exam=Banking" class="chip">Banking</a>
+      </div>
+
+      <div class="mini-stats">
+        <div><b data-stat="exams">0</b><span>Exams covered</span></div>
+        <div><b data-stat="tests">0</b><span>Mock tests</span></div>
+        <div><b data-stat="questions">0</b><span>Practice questions</span></div>
+        <div><b data-stat="notes">0</b><span>Study notes</span></div>
+      </div>
+    </div>
+
+    <!-- LIVE QUESTION -->
+    <div class="quiz-card" id="quizCard" aria-live="polite">
+      <div class="qc-head"><span><strong style="color:var(--purple-600)">Try a question</strong> · demo question</span><span id="qcSub"></span></div>
+      <div class="qc-q" id="qcQ"></div>
+      <div id="qcOpts"></div>
+      <div id="qcExp" class="qc-exp hide"></div>
+      <div class="qc-actions">
+        <span class="small muted" id="qcScore">Answer to see the explanation</span>
+        <button type="button" class="btn btn-outline" id="qcNext">Next question →</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== PROMO CAROUSEL ==================== -->
+<section class="promo-carousel" id="promoCarousel" aria-label="Promotions and offers">
+  <div class="promo-track">
+
+    <!-- SLIDE 1 — Discount / Scholarship -->
+    <!-- 🔁 REPLACE src WITH YOUR OWN IMAGE: images/promo-1.jpg -->
+    <div class="promo-slide active">
+      <a href="pricing.html" aria-label="Get 30% scholarship on premium plans">
+        <img src="images/promo-1.jpg" alt="Get flat 30% scholarship on ExamPro premium plans"
+             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+        <!-- Fallback (shows if image missing) -->
+        <div class="promo-slide-fallback" style="display:none;">
+          <div class="promo-fb-text">
+            <span class="promo-fb-badge">Limited Offer</span>
+            <div class="promo-fb-title">Get Flat 30% Scholarship</div>
+            <div class="promo-fb-sub">On ExamPro Premium plans — SSC, Railway, BPSC &amp; Banking mock tests.</div>
+            <span class="promo-fb-cta">Register Now →</span>
+          </div>
+          <div class="promo-fb-visual">🎓</div>
+        </div>
+      </a>
+    </div>
+
+    <!-- SLIDE 2 — New Mock Test Series -->
+    <div class="promo-slide">
+      <a href="tests.html" aria-label="New SSC CGL 2026 mock test series launched">
+        <img src="images/promo-2.jpg" alt="New SSC CGL 2026 mock test series now available"
+             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+        <div class="promo-slide-fallback" style="display:none;">
+          <div class="promo-fb-text">
+            <span class="promo-fb-badge">Just Launched</span>
+            <div class="promo-fb-title">SSC CGL 2026 Mock Series</div>
+            <div class="promo-fb-sub">Full-length tests in real CBT interface with detailed analytics.</div>
+            <span class="promo-fb-cta">Start Practicing →</span>
+          </div>
+          <div class="promo-fb-visual">📝</div>
+        </div>
+      </a>
+    </div>
+
+    <!-- SLIDE 3 — Free Trial -->
+    <div class="promo-slide">
+      <a href="register.html" aria-label="Start your free trial today">
+        <img src="images/promo-3.jpg" alt="Start ExamPro free — no credit card needed"
+             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+        <div class="promo-slide-fallback" style="display:none;">
+          <div class="promo-fb-text">
+            <span class="promo-fb-badge">100% Free</span>
+            <div class="promo-fb-title">Start Free. No Card Needed.</div>
+            <div class="promo-fb-sub">Daily quizzes, mock tests and analytics — free forever.</div>
+            <span class="promo-fb-cta">Create Account →</span>
+          </div>
+          <div class="promo-fb-visual">🚀</div>
+        </div>
+      </a>
+    </div>
+
+    <!-- SLIDE 4 — Bihar / Regional Focus -->
+    <div class="promo-slide">
+      <a href="exams.html" aria-label="BPSC and Bihar Police exam preparation">
+        <img src="images/promo-4.jpg" alt="BPSC and Bihar Police exam preparation in Hindi and English"
+             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+        <div class="promo-slide-fallback" style="display:none;">
+          <div class="promo-fb-text">
+            <span class="promo-fb-badge">For Bihar Aspirants</span>
+            <div class="promo-fb-title">BPSC · Bihar Police · BSSC</div>
+            <div class="promo-fb-sub">Bilingual practice material in Hindi &amp; English with PYQs.</div>
+            <span class="promo-fb-cta">Explore Exams →</span>
+          </div>
+          <div class="promo-fb-visual">📚</div>
+        </div>
+      </a>
+    </div>
+
+    <!-- SLIDE 5 — Current Affairs Daily -->
+    <div class="promo-slide">
+      <a href="current-affairs.html" aria-label="Daily current affairs quizzes">
+        <img src="images/promo-5.jpg" alt="Daily current affairs quiz for government exams"
+             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+        <div class="promo-slide-fallback" style="display:none;">
+          <div class="promo-fb-text">
+            <span class="promo-fb-badge">Updated Daily</span>
+            <div class="promo-fb-title">Current Affairs Quiz</div>
+            <div class="promo-fb-sub">10 fresh questions every day — stay ahead of the exam.</div>
+            <span class="promo-fb-cta">Take Today's Quiz →</span>
+          </div>
+          <div class="promo-fb-visual">📰</div>
+        </div>
+      </a>
+    </div>
+
+  </div>
+
+  <!-- Arrows -->
+  <button class="promo-arrow prev" id="promoPrev" aria-label="Previous slide">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M15 18l-6-6 6-6"/>
+    </svg>
+  </button>
+  <button class="promo-arrow next" id="promoNext" aria-label="Next slide">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M9 18l6-6-6-6"/>
+    </svg>
+  </button>
+
+  <!-- Dots -->
+  <div class="promo-dots" id="promoDots" role="tablist" aria-label="Slide navigation"></div>
+
+  <!-- Progress bar -->
+  <div class="promo-progress"><div class="promo-progress-fill" id="promoProgress"></div></div>
+</section>
+
+<!-- ================= TODAY ================= -->
+<section class="stats" style="padding:30px 0">
+  <div class="container today-grid">
+    <div class="widget" style="margin:0" id="tdPractice"></div>
+    <div class="widget" style="margin:0" id="tdDay"></div>
+    <div class="widget" style="margin:0" id="tdYou"></div>
+  </div>
+</section>
+
+<!-- ================= HOW IT WORKS ================= -->
+<section class="block">
+  <div class="container">
+    <div class="sec-head"><h2>How ExamPro works</h2><p>Three simple steps from "where do I start?" to "I know what to fix".</p></div>
+    <div class="steps">
+      <div class="step"><h3>Pick your exam</h3><p>See the pattern, syllabus and tests for your exam, and set it as your target.</p></div>
+      <div class="step"><h3>Practise &amp; test</h3><p>Learn chapter by chapter, then take timed mocks with a real exam-style palette.</p></div>
+      <div class="step"><h3>Review &amp; improve</h3><p>Get time-per-question, subject accuracy and a list of weak chapters to revise next.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= EXAMS ================= -->
+<section class="block" id="exams" style="background:var(--bg-soft)">
+  <div class="container">
+    <div class="sec-head">
+      <h2>Browse by Examination</h2>
+      <p>Choose your target exam to see its syllabus, pattern and available tests.</p>
+    </div>
+
+    <div class="tabs" id="examTabs" style="justify-content:center">
+      <button type="button" class="tab active" data-cat="all">All</button>
+      <button type="button" class="tab" data-cat="ssc">SSC</button>
+      <button type="button" class="tab" data-cat="railway">Railway</button>
+      <button type="button" class="tab" data-cat="bihar">Bihar</button>
+      <button type="button" class="tab" data-cat="other">Other</button>
+    </div>
+
+    <div class="cards" id="examGrid"></div>
+    <p style="text-align:center;margin-top:24px"><a href="exams.html" class="btn btn-outline">View all exams with filters →</a></p>
+  </div>
+</section>
+
+<!-- ================= TEST CATEGORIES ================= -->
+<section class="block" id="tests">
+  <div class="container">
+    <div class="sec-head">
+      <h2>Every kind of practice</h2>
+      <p>Organised the way you actually study.</p>
+    </div>
+    <div class="cat-grid">
+      <a class="cat-card" href="tests.html?type=Full%20Mock"><div class="cat-ico">🎯</div><span>Full-Length Mock Tests</span></a>
+      <a class="cat-card" href="tests.html#custom"><div class="cat-ico">🛠️</div><span>Custom Tests</span></a>
+      <a class="cat-card" href="tests.html?type=Subject"><div class="cat-ico">📚</div><span>Subject-Wise Tests</span></a>
+      <a class="cat-card" href="practice.html"><div class="cat-ico">📖</div><span>Chapter-Wise Practice</span></a>
+      <a class="cat-card" href="papers.html"><div class="cat-ico">📅</div><span>Year-Wise Papers</span></a>
+      <a class="cat-card" href="test-attempt.html?mode=daily"><div class="cat-ico">⚡</div><span>Daily Practice</span></a>
+      <a class="cat-card" href="test-attempt.html?mode=important"><div class="cat-ico">⭐</div><span>Important Questions</span></a>
+      <a class="cat-card" href="test-attempt.html?mode=incorrect"><div class="cat-ico">🔁</div><span>Incorrect Practice</span></a>
+      <a class="cat-card" href="test-attempt.html?mode=bookmarks"><div class="cat-ico">🔖</div><span>Bookmarked Questions</span></a>
+    </div>
+  </div>
+</section>
+
+<!-- ================= FEATURES ================= -->
+<section class="block" style="background:var(--bg-soft)">
+  <div class="container">
+    <div class="sec-head"><h2>Everything you need in one place</h2><p>Built for serious aspirants who want real exam-day readiness.</p></div>
+    <div class="feat-grid">
+      <a class="feat" href="dashboard.html"><div class="ico">📊</div><h3>Performance dashboard</h3><p>Score trend, subject strengths, weak chapters, daily goal and streak.</p></a>
+      <a class="feat" href="tests.html"><div class="ico">🎯</div><h3>Real exam interface</h3><p>Question palette, timer, mark-for-review, keyboard shortcuts and auto-submit.</p></a>
+      <a class="feat" href="materials.html"><div class="ico">📝</div><h3>Notes &amp; formula sheets</h3><p>Searchable, bookmarkable, printable — with a practice set for every chapter.</p></a>
+      <a class="feat" href="current-affairs.html"><div class="ico">📰</div><h3>Current affairs</h3><p>Important-days calendar plus your own notebook to revise before the exam.</p></a>
+      <a class="feat" href="leaderboard.html"><div class="ico">🏆</div><h3>Leaderboard</h3><p>See how you rank among everyone practising on this device.</p></a>
+      <a class="feat" href="tests.html#custom"><div class="ico">🧠</div><h3>Custom practice</h3><p>Build a test by subject, difficulty, question count and duration.</p></a>
+    </div>
+  </div>
+</section>
+
+<!-- ================= FAQ ================= -->
+<section class="block" id="faq">
+  <div class="container">
+    <div class="sec-head"><h2>Frequently Asked Questions</h2><p>Quick answers to common questions from aspirants.</p></div>
+    <div style="max-width:760px;margin:0 auto">
+      <details class="acc" open><summary>Is ExamPro free to use?</summary><div class="acc-body">Yes — the core mock tests, custom test builder and performance analysis are free. See <a href="pricing.html" style="color:var(--purple-600)">pricing</a> for the optional paid plans planned for later.</div></details>
+      <details class="acc"><summary>Which exams are covered?</summary><div class="acc-body">SSC (CGL, CHSL, MTS, GD, CPO), Railway (NTPC, Group D, ALP, Technician), Bihar exams (BPSC, Police, BSSC, Daroga), Banking, UPSC, and select state and defence exams. Tests are being added exam by exam.</div></details>
+      <details class="acc"><summary>Can I build my own test?</summary><div class="acc-body">Yes. Use the <a href="tests.html#custom" style="color:var(--purple-600)">Custom Test Builder</a> to pick subject, difficulty, number of questions, duration and language.</div></details>
+      <details class="acc"><summary>Are the questions official?</summary><div class="acc-body">No. Questions on this site are demo practice questions and are labelled as such. Previous year papers will be added only when licensing is confirmed.</div></details>
+      <details class="acc"><summary>Where is my progress saved?</summary><div class="acc-body">In this browser, on your device. You can export a backup from your <a href="profile.html" style="color:var(--purple-600)">profile</a> page.</div></details>
+      <details class="acc"><summary>Do you support Hindi?</summary><div class="acc-body">Hindi-subject questions are available now. Full bilingual translation of every question is planned.</div></details>
+    </div>
+  </div>
+</section>
+
+
+<!-- ================= WAYS TO PRACTISE ================= -->
+<section class="block" id="ways">
+  <div class="container">
+    <div class="sec-head"><h2>Pick how you want to practise</h2><p>Exam-wise, chapter-wise, year-wise, timed drills — every way to prepare, in one place.</p></div>
+    <div class="type-grid" id="typeGrid"></div>
+  </div>
+</section>
+
+<!-- ================= PRICING ================= -->
+<section class="block" id="pricing">
+  <div class="container">
+    <div class="sec-head"><h2>Simple pricing</h2><p>Start free. Upgrade only when you want premium test series. No card needed to begin.</p></div>
+    <div class="plan-grid" id="planGrid"></div>
+    <p style="text-align:center;margin-top:16px"><a href="pricing.html" class="btn btn-outline">Compare all plans →</a></p>
+  </div>
+</section>
+
+<!-- ================= TEAM ================= -->
+<section class="block" style="background:var(--bg-soft)" id="team">
+  <div class="container">
+    <div class="sec-head"><h2>Meet the team</h2><p>The people building ExamPro.</p></div>
+    <div class="team-grid" id="teamGrid"></div>
+    <p style="text-align:center;margin-top:16px"><a href="about.html" class="btn btn-outline">About us →</a></p>
+  </div>
+</section>
+
+<!-- ================= CTA ================= -->
+<section class="block" style="padding-top:10px">
+  <div class="container">
+    <div class="cta-band">
+      <h2>Ready to find out where you really stand?</h2>
+      <p>Take a free timed mock test now — no signup needed — and see your full analysis in minutes.</p>
+      <div class="row" style="justify-content:center">
+        <a href="test-attempt.html?id=1" class="btn btn-light btn-lg">Start free mock test</a>
+        <a href="register.html" class="btn btn-lg" style="border:1.5px solid rgba(255,255,255,.6);color:#fff">Create free account</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div id="site-footer"></div>
+
+<script src="shared.js"></script>
+<script>
+(function () {
+  const box = document.getElementById('planGrid'); if (!box) return; const money = n => n === 0 ? '₹0' : '₹' + n.toLocaleString('en-IN');
+  box.innerHTML = PLANS.map(p => `<div class="plan${p.featured ? ' featured' : ''}">${p.featured ? '<span class="tag">Most popular</span>' : ''}<h3>${escapeHtml(p.name)}</h3><div class="muted small">${escapeHtml(p.blurb)}</div>
+    <div class="price">${money(p.monthly)} <small>${p.monthly === 0 ? 'forever' : '/ month'}</small></div>${p.yearly ? `<div class="small muted">or ${money(p.yearly)} / year</div>` : ''}
+    <ul>${p.feats.slice(0, 5).map(f => `<li>${escapeHtml(f[0])}</li>`).join('')}</ul><a class="btn ${p.featured ? 'btn-primary' : 'btn-outline'} btn-lg" href="${p.monthly === 0 ? 'register.html' : 'pricing.html'}">${p.monthly === 0 ? 'Start free' : 'See ' + escapeHtml(p.name)}</a></div>`).join('');
+})();
+renderTestTypes(document.getElementById("typeGrid")); renderTeam(document.getElementById("teamGrid"), true);</script>
+<script>
+(function () {
+  /* ---------- exams grid ---------- */
+  let currentCat = 'all', currentQuery = '';
+  const examGrid = document.getElementById('examGrid');
+  const heroSearch = document.getElementById('heroSearch');
+  const navSearch = document.getElementById('navSearch');
+
+  function renderExams() {
+    const q = currentQuery.trim().toLowerCase();
+    const filtered = EXAMS.filter(e => (currentCat === 'all' || e.cat === currentCat) &&
+      (!q || e.name.toLowerCase().includes(q) || e.code.toLowerCase().includes(q) || e.desc.toLowerCase().includes(q)));
+    if (!filtered.length) {
+      examGrid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text-muted)">No exams match your search. <button type="button" id="clearSearchBtn" class="chip" style="margin-left:8px">Clear</button></div>`;
+      document.getElementById('clearSearchBtn').addEventListener('click', () => setQuery('', false));
+      return;
+    }
+    examGrid.innerHTML = filtered.map(e => `
+      <a class="card" href="exam-detail.html?exam=${encodeURIComponent(e.name)}">
+        <div class="exam-icon">${escapeHtml(e.code)}</div>
+        <h3>${escapeHtml(e.name)}</h3>
+        <p>${escapeHtml(e.desc)}</p>
+        <div class="meta"><span style="color:var(--purple-600);font-weight:600">${e.tests} test${e.tests === 1 ? '' : 's'} available</span><span>${e.tests > 0 ? '▶ Start' : 'Details →'}</span></div>
+      </a>`).join('');
+  }
+  function setQuery(v, scroll) {
+    currentQuery = v;
+    if (heroSearch.value !== v) heroSearch.value = v;
+    if (navSearch && navSearch.value !== v) navSearch.value = v;
+    renderExams();
+    if (scroll && v) document.getElementById('exams').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  document.getElementById('examTabs').addEventListener('click', e => {
+    const btn = e.target.closest('.tab'); if (!btn) return;
+    document.querySelectorAll('#examTabs .tab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active'); currentCat = btn.dataset.cat; renderExams();
+  });
+  heroSearch.addEventListener('input', () => setQuery(heroSearch.value, true));
+  document.getElementById('heroForm').addEventListener('submit', e => { e.preventDefault(); document.getElementById('exams').scrollIntoView({ behavior: 'smooth', block: 'start' }); });
+  window.onNavSearch = v => setQuery(v, true);
+  renderExams();
+
+  /* ---------- stats come from the real data ---------- */
+  const stats = { exams: EXAMS.length, tests: TESTS.length, questions: QUESTIONS.length, notes: NOTES.length };
+  document.querySelectorAll('[data-stat]').forEach(el => {
+    const target = stats[el.dataset.stat] || 0; let cur = 0; const step = Math.max(1, Math.ceil(target / 30));
+    const t = setInterval(() => { cur += step; if (cur >= target) { cur = target; clearInterval(t); } el.textContent = cur; }, 30);
+  });
+
+  /* ---------- live demo question ---------- */
+  const pool = QUESTIONS.filter(q => !q.passage && q.subject !== 'Hindi' && q.q.length < 120 && !q.q.includes('\n'));
+  let order = [], qi = 0, answered = 0, right = 0;
+  function nextOrder() { order = pool.slice().sort(() => Math.random() - .5); qi = 0; }
+  nextOrder();
+  const LET = ['A', 'B', 'C', 'D'];
+  function showQ() {
+    const q = order[qi % order.length];
+    document.getElementById('qcSub').textContent = q.subject + ' · ' + q.diff;
+    document.getElementById('qcQ').textContent = q.q;
+    document.getElementById('qcExp').classList.add('hide');
+    document.getElementById('qcOpts').innerHTML = q.opts.map((o, i) => `<button type="button" class="t-opt" data-i="${i}"><span class="let">${LET[i]}</span><span>${escapeHtml(o)}</span></button>`).join('');
+    document.getElementById('qcOpts').dataset.q = q.id;
+  }
+  document.getElementById('qcOpts').addEventListener('click', e => {
+    const b = e.target.closest('[data-i]'); if (!b || b.parentNode.dataset.done) return;
+    const q = QUESTIONS.find(x => x.id === b.parentNode.dataset.q), pick = +b.dataset.i;
+    b.parentNode.dataset.done = '1';
+    [...b.parentNode.children].forEach((c, i) => { if (i === q.ans) c.classList.add('ok'); else if (i === pick) c.classList.add('bad'); });
+    answered++; if (pick === q.ans) right++;
+    const ex = document.getElementById('qcExp'); ex.innerHTML = '<strong>' + (pick === q.ans ? 'Correct! ' : 'Not quite. ') + '</strong>' + escapeHtml(q.exp); ex.classList.remove('hide');
+    document.getElementById('qcScore').textContent = right + ' of ' + answered + ' correct so far';
+  });
+  document.getElementById('qcNext').addEventListener('click', () => { qi++; delete document.getElementById('qcOpts').dataset.done; showQ(); });
+  showQ();
+
+  /* ---------- today strip ---------- */
+  const now = new Date(), user = getUser(), attempts = getAttempts();
+  document.getElementById('tdPractice').innerHTML = `<h3>⚡ Today's practice</h3><div class="sub">10 mixed questions, new every day</div>
+    <p class="small muted" style="margin-bottom:12px">A quick daily habit beats a long weekend cram.</p><a class="btn btn-primary" href="test-attempt.html?mode=daily">Start daily practice</a>`;
+
+  const todays = IMPORTANT_DAYS.filter(d => d[0] === now.getMonth() + 1 && d[1] === now.getDate());
+  let nextDay = null;
+  if (!todays.length) {
+    const base = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    nextDay = IMPORTANT_DAYS.map(d => { let dt = new Date(now.getFullYear(), d[0] - 1, d[1]); if (dt < base) dt = new Date(now.getFullYear() + 1, d[0] - 1, d[1]); return { d, diff: Math.round((dt - base) / 864e5) }; }).sort((a, b) => a.diff - b.diff)[0];
+  }
+  document.getElementById('tdDay').innerHTML = `<h3>📅 ${todays.length ? 'Today is…' : 'Next important day'}</h3><div class="sub">${now.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' })}</div>
+    <p style="font-weight:600;margin-bottom:12px">${todays.length ? todays.map(d => escapeHtml(d[2])).join(' · ') : escapeHtml(nextDay.d[2]) + ' <span class="muted small">(in ' + nextDay.diff + ' day' + (nextDay.diff === 1 ? '' : 's') + ')</span>'}</p>
+    <a class="btn btn-outline" href="current-affairs.html">Current affairs</a>`;
+
+  const sess = store.get('exampro-session', null);
+  const resume = sess && !sess.done && sess.start && (Date.now() - sess.start) / 1000 < sess.durSec;
+  if (resume) {
+    document.getElementById('tdYou').innerHTML = `<h3>⏱ Test in progress</h3><div class="sub">${escapeHtml(sess.title)}</div><p class="small muted" style="margin-bottom:12px">Your answers and remaining time are saved.</p><a class="btn btn-primary" href="test-attempt.html${escapeHtml(sess.sig)}">Resume test</a>`;
+  } else if (attempts.length) {
+    const sk = calcStreak(attempts);
+    document.getElementById('tdYou').innerHTML = `<h3>🔥 ${user ? 'Welcome back, ' + escapeHtml(user.name.split(' ')[0]) : 'Welcome back'}</h3><div class="sub">${sk.current}-day streak · ${attempts.length} test${attempts.length === 1 ? '' : 's'} taken</div><p class="small muted" style="margin-bottom:12px">See what to revise next on your dashboard.</p><a class="btn btn-primary" href="dashboard.html">Open dashboard</a>`;
+  } else {
+    document.getElementById('tdYou').innerHTML = `<h3>🎯 Find your level</h3><div class="sub">No signup needed</div><p class="small muted" style="margin-bottom:12px">Take a 25-question mock and get a full analysis.</p><a class="btn btn-primary" href="test-attempt.html?id=1">Start free mock</a>`;
+  }
+})();
+</script>
+</body>
+</html>

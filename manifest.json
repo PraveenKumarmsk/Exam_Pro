@@ -1,0 +1,22 @@
+{
+  "name": "ExamPro — Govt Exam Practice",
+  "short_name": "ExamPro",
+  "description": "Mock tests, previous papers, practice and study notes for Indian government exams.",
+  "start_url": "index.html?source=pwa",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#ffffff",
+  "theme_color": "#1e3a8a",
+  "lang": "en-IN",
+  "categories": ["education"],
+  "icons": [
+    {"src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+    {"src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+    {"src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ],
+  "shortcuts": [
+    {"name": "Mock Tests", "url": "tests.html", "icons": [{"src": "icons/icon-192.png", "sizes": "192x192"}]},
+    {"name": "Daily Practice", "url": "test-attempt.html?mode=daily", "icons": [{"src": "icons/icon-192.png", "sizes": "192x192"}]}
+  ]
+}

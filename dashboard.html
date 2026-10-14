@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Dashboard — ExamPro</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231e3a8a'/%3E%3Cpath d='M9 22V10h13v3h-9v2h8v3h-8v4z' fill='%23fff'/%3E%3Ccircle cx='24' cy='24' r='4' fill='%237c3aed'/%3E%3C/svg%3E" />
+<script>(function(){try{var t=localStorage.getItem('exampro-theme');if(!t&&window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches)t='dark';if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+<link rel="stylesheet" href="shared.css" />
+<link rel="manifest" href="manifest.json" />
+<meta name="theme-color" content="#1e3a8a" />
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+<meta name="mobile-web-app-capable" content="yes" /><meta name="apple-mobile-web-app-capable" content="yes" /><meta name="apple-mobile-web-app-title" content="ExamPro" />
+</head>
+<body data-page="dashboard" data-search="Search exams…">
+
+<div id="site-header"></div>
+
+<div class="page-head">
+  <div class="container">
+    <div class="breadcrumb"><a href="index.html">Home</a> / Dashboard</div>
+    <h1 id="hello">Dashboard</h1>
+    <p id="subhello">Your progress, strengths and what to practise next — all calculated from your own attempts.</p>
+  </div>
+</div>
+
+<section class="block">
+  <div class="container" id="content"></div>
+</section>
+
+<div id="site-footer"></div>
+
+<script src="shared.js"></script>
+<script>
+(function () {
+  const root = document.getElementById('content');
+  const user = getUser();
+  const attempts = getAttempts();
+  const goal = (user && +user.goal) || 20;
+
+  document.getElementById('hello').textContent = user ? 'Welcome back, ' + user.name.split(' ')[0] : 'Dashboard';
+  if (user && user.exam) document.getElementById('subhello').textContent = 'Target exam: ' + user.exam + ' — your progress, strengths and what to practise next.';
+
+  const sess = store.get('exampro-session', null);
+  const resume = sess && !sess.done && sess.start && (Date.now() - sess.start) / 1000 < sess.durSec ? sess : null;
+
+  if (!attempts.length) {
+    root.innerHTML = `
+      ${user ? '' : `<div class="info-note"><span>You are browsing as a guest. <a href="register.html" style="color:var(--purple-600);font-weight:600">Create a free account</a> to set a daily goal and target exam.</span></div>`}
+      ${resume ? `<div class="info-note"><span>You have a test in progress: <strong>${escapeHtml(resume.title)}</strong></span><a class="btn btn-primary" href="test-attempt.html${escapeHtml(resume.sig)}">Resume</a></div>` : ''}
+      <div class="empty panel" style="padding:56px 24px">
+        <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 3v18h18"/><path d="m7 14 4-4 4 4 6-6"/></svg>
+        <h3>Your dashboard is empty — for now</h3>
+        <p>Finish your first test or practice set and your charts, streak and weak-topic list will appear here.</p>
+        <div class="btn-row"><a href="test-attempt.html?id=1" class="btn btn-primary btn-lg">Start Free Mock Test</a><a href="test-attempt.html?mode=daily" class="btn btn-outline btn-lg">Daily Practice</a></div>
+      </div>`;
+    return;
+  }
+
+  const st = overallStats(attempts), streak = calcStreak(attempts), today = questionsToday(attempts);
+  const ts = topicStats(attempts);
+  const wrongCount = getWrong().length, bmCount = getBookmarks().length;
+
+  /* goal ring */
+  const pctGoal = Math.min(1, today / goal), C = 2 * Math.PI * 46;
+  const ring = `<svg viewBox="0 0 110 110" role="img" aria-label="${today} of ${goal} questions today"><circle class="ring-bg" cx="55" cy="55" r="46" fill="none" stroke-width="10"/>
+    <circle class="ring-fg" cx="55" cy="55" r="46" fill="none" stroke-width="10" stroke-linecap="round" transform="rotate(-90 55 55)" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${(C * (1 - pctGoal)).toFixed(1)}"/>
+    <text x="55" y="60" text-anchor="middle" style="fill:var(--text);font-size:20px;font-weight:800">${Math.round(pctGoal * 100)}%</text></svg>`;
+
+  /* trend line (last 10 attempts, oldest -> newest) */
+  function trend() {
+    const list = attempts.slice(0, 10).reverse();
+    if (list.length < 2) return '<p class="muted small">Take at least two tests to see your trend.</p>';
+    const W = 560, H = 190, pl = 32, pr = 12, pt = 14, pb = 24;
+    const x = i => pl + (W - pl - pr) * (i / (list.length - 1)), y = v => pt + (H - pt - pb) * (1 - v / 100);
+    const pts = list.map((a, i) => [x(i), y(Math.round(a.correct / a.total * 100)), a]);
+    let svg = `<svg class="chart-svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="Score trend">`;
+    [0, 25, 50, 75, 100].forEach(v => { svg += `<line class="grid" x1="${pl}" x2="${W - pr}" y1="${y(v)}" y2="${y(v)}"/><text x="${pl - 6}" y="${y(v) + 3}" text-anchor="end">${v}</text>`; });
+    svg += `<path class="area" d="M${pts[0][0]},${y(0)} ${pts.map(p => 'L' + p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ')} L${pts[pts.length - 1][0]},${y(0)} Z"/>`;
+    svg += `<polyline class="line" points="${pts.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ')}"/>`;
+    pts.forEach((p, i) => { svg += `<circle class="dot" cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="4"><title>${escapeHtml(p[2].title)} — ${Math.round(p[2].correct / p[2].total * 100)}%</title></circle><text x="${p[0].toFixed(1)}" y="${H - 8}" text-anchor="middle">${i + 1}</text>`; });
+    return svg + '</svg>';
+  }
+
+  /* subject bars */
+  const subjRows = Object.keys(ts.subj).map(k => ({ k, p: Math.round(ts.subj[k].ok / ts.subj[k].att * 100), n: ts.subj[k].att, ok: ts.subj[k].ok }))
+    .sort((a, b) => a.p - b.p).map(r => `<div style="margin-bottom:14px">
+      <div class="row between" style="font-size:.86rem"><strong>${escapeHtml(r.k)}</strong><span class="muted">${r.ok}/${r.n} · ${r.p}%</span></div>
+      <div class="rank-bar"><div class="rank-fill" style="width:${r.p}%"></div></div></div>`).join('');
+
+  /* weak chapters */
+  const weak = ts.chap.filter(c => c.att >= 1).map(c => Object.assign({ p: Math.round(c.ok / c.att * 100) }, c)).sort((a, b) => a.p - b.p || b.att - a.att).slice(0, 5);
+  const weakRows = weak.map(c => `<div class="list-row"><div class="grow"><div class="t">${escapeHtml(c.chapter)}</div><div class="s">${escapeHtml(c.subject)} · ${c.ok}/${c.att} correct (${c.p}%)</div></div>
+      <a class="btn btn-outline" style="padding:6px 12px;font-size:.78rem" href="test-attempt.html?mode=practice&subject=${encodeURIComponent(c.subject)}&chapter=${encodeURIComponent(c.chapter)}">Practise</a></div>`).join('');
+
+  /* 28-day activity heat map */
+  const perDay = {}; attempts.forEach(a => { const k = dayKey(a.date); perDay[k] = (perDay[k] || 0) + a.correct + a.wrong; });
+  let heat = ''; const now = new Date();
+  for (let i = 27; i >= 0; i--) {
+    const d = new Date(now); d.setDate(now.getDate() - i); const k = dayKey(d), n = perDay[k] || 0;
+    const lvl = n === 0 ? '' : n < 10 ? 'l1' : n < goal ? 'l2' : 'l3';
+    heat += `<i class="${lvl}${i === 0 ? ' today' : ''}" title="${d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}: ${n} question${n === 1 ? '' : 's'}"></i>`;
+  }
+
+  /* recent attempts */
+  const recent = attempts.slice(0, 5).map(a => {
+    const p = Math.round(a.correct / a.total * 100);
+    return `<div class="list-row"><div class="grow"><div class="t">${escapeHtml(a.title)}</div><div class="s">${escapeHtml(fmtDate(a.date))} · ${fmtTime(a.timeSec || 0)}</div></div>
+      <span class="badge-pill ${p >= 60 ? 'badge-easy' : p >= 35 ? 'badge-medium' : 'badge-hard'}">${a.score}/${a.max}</span>
+      <a class="btn btn-ghost" style="padding:6px 10px;font-size:.78rem" href="test-result.html?id=${encodeURIComponent(a.id)}">View</a></div>`;
+  }).join('');
+
+  root.innerHTML = `
+    ${user ? '' : `<div class="info-note"><span>You are browsing as a guest — your data is saved on this device. <a href="register.html" style="color:var(--purple-600);font-weight:600">Create a free account</a> to set a daily goal.</span></div>`}
+    ${resume ? `<div class="info-note"><span>You have a test in progress: <strong>${escapeHtml(resume.title)}</strong></span><a class="btn btn-primary" href="test-attempt.html${escapeHtml(resume.sig)}">Resume</a></div>` : ''}
+
+    <div class="stats-grid" style="margin-bottom:22px">
+      <div class="stat"><div class="num">${st.attempts}</div><div class="lbl">Attempts</div></div>
+      <div class="stat"><div class="num">${st.avgPct}%</div><div class="lbl">Average Score</div><div class="note">best ${st.best}%</div></div>
+      <div class="stat"><div class="num">${st.accuracy}%</div><div class="lbl">Accuracy</div><div class="note">${st.correct}/${st.attempted} attempted</div></div>
+      <div class="stat"><div class="num">${fmtTime(st.secs)}</div><div class="lbl">Time Practised</div></div>
+    </div>
+
+    <div class="dash-grid">
+      <div>
+        <div class="widget"><h3>Score trend</h3><div class="sub">Your last ${Math.min(10, attempts.length)} attempts, oldest to newest</div>${trend()}</div>
+        <div class="widget"><h3>Subject strengths</h3><div class="sub">Weakest first — start at the top</div>${subjRows || '<p class="muted small">Answer some questions to see this.</p>'}</div>
+        <div class="widget"><h3>Topics to revise</h3><div class="sub">Your lowest-accuracy chapters</div>${weakRows || '<p class="muted small">No data yet.</p>'}</div>
+      </div>
+      <div>
+        <div class="widget"><h3>Today's goal</h3><div class="sub">${goal} questions a day</div>
+          <div class="ring-wrap">${ring}<div><div style="font-size:1.4rem;font-weight:800">${today} / ${goal}</div><div class="small muted">${today >= goal ? 'Goal reached — great work!' : (goal - today) + ' more to go'}</div></div></div>
+          <div class="row" style="margin-top:14px"><a class="btn btn-primary" href="test-attempt.html?mode=daily">Daily practice</a>${user ? '<a class="btn btn-outline" href="profile.html">Change goal</a>' : ''}</div></div>
+        <div class="widget"><h3>Streak</h3><div class="sub">Consecutive days with at least one test</div>
+          <div class="row"><div><div style="font-size:1.8rem;font-weight:800">🔥 ${streak.current}</div><div class="small muted">current</div></div><div style="margin-left:22px"><div style="font-size:1.8rem;font-weight:800">🏆 ${streak.best}</div><div class="small muted">best</div></div></div>
+          <div class="heat" style="margin-top:16px">${heat}</div><div class="small muted" style="margin-top:8px">Last 28 days · darker = more questions</div></div>
+        <div class="widget"><h3>Practise smarter</h3>
+          <div class="list-row"><div class="grow"><div class="t">Incorrect questions</div><div class="s">${wrongCount} to retry</div></div><a class="btn btn-outline ${wrongCount ? '' : 'disabled'}" style="padding:6px 12px;font-size:.78rem" href="${wrongCount ? 'test-attempt.html?mode=incorrect' : 'tests.html'}">${wrongCount ? 'Retry' : 'None'}</a></div>
+          <div class="list-row"><div class="grow"><div class="t">Bookmarked</div><div class="s">${bmCount} saved</div></div><a class="btn btn-outline" style="padding:6px 12px;font-size:.78rem" href="${bmCount ? 'test-attempt.html?mode=bookmarks' : 'practice.html'}">${bmCount ? 'Practise' : 'Find'}</a></div>
+          <div class="list-row"><div class="grow"><div class="t">Important questions</div><div class="s">Frequently asked types</div></div><a class="btn btn-outline" style="padding:6px 12px;font-size:.78rem" href="test-attempt.html?mode=important">Start</a></div></div>
+        <div class="widget"><h3>Recent attempts</h3><div class="sub">&nbsp;</div>${recent}<p style="margin-top:10px"><a href="results.html" style="color:var(--purple-600);font-weight:600;font-size:.86rem">All results →</a></p></div>
+      </div>
+    </div>`;
+})();
+</script>
+</body>
+</html>

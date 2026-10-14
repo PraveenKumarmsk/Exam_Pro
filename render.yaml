@@ -1,0 +1,29 @@
+# Render Blueprint: New > Blueprint > pick your GitHub repo.
+# A persistent disk is required for the SQLite database (disks need a paid plan; free plans lose data on restart).
+services:
+  - type: web
+    name: exampro
+    runtime: node
+    plan: starter
+    buildCommand: "echo no build step"
+    startCommand: "node --no-warnings server/seed.js && node --no-warnings server/index.js"
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: 22
+      - key: NODE_ENV
+        value: production
+      - key: COOKIE_SECURE
+        value: "1"
+      - key: DB_PATH
+        value: /var/data/exampro.db
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: ADMIN_EMAIL
+        sync: false      # you type this in the Render dashboard
+      - key: ADMIN_PASSWORD
+        sync: false      # you type this in the Render dashboard (letter + number, 8+ chars)
+    disk:
+      name: exampro-data
+      mountPath: /var/data
+      sizeGB: 1

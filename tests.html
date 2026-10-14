@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Mock Tests — ExamPro</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231e3a8a'/%3E%3Cpath d='M9 22V10h13v3h-9v2h8v3h-8v4z' fill='%23fff'/%3E%3Ccircle cx='24' cy='24' r='4' fill='%237c3aed'/%3E%3C/svg%3E" />
+<script>(function(){try{var t=localStorage.getItem('exampro-theme');if(!t&&window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches)t='dark';if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+<link rel="stylesheet" href="shared.css" />
+<link rel="manifest" href="manifest.json" />
+<meta name="theme-color" content="#1e3a8a" />
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+<meta name="mobile-web-app-capable" content="yes" /><meta name="apple-mobile-web-app-capable" content="yes" /><meta name="apple-mobile-web-app-title" content="ExamPro" />
+</head>
+<body data-page="tests" data-search="Search tests…">
+
+<div id="site-header"></div>
+
+<div class="page-head">
+  <div class="container">
+    <div class="breadcrumb"><a href="index.html">Home</a> / Mock Tests</div>
+    <h1>Mock Tests</h1>
+    <p>Full-length and subject-wise mock tests. Start with a free test — no signup needed.</p>
+  </div>
+</div>
+
+<section class="block" id="ways">
+  <div class="container">
+    <div class="sec-head left" style="margin-bottom:18px"><h2>Ways to practise</h2><p>Choose the format that fits where you are in your preparation.</p></div>
+    <div class="type-grid" id="typeGrid"></div>
+  </div>
+</section>
+
+<section class="block" id="mastery" style="background:var(--bg-soft)">
+  <div class="container">
+    <div class="sec-head left" style="margin-bottom:18px"><h2>Master one chapter at a time</h2><p>Finish a chapter properly before moving on. Your progress is saved on this device.</p></div>
+    <div id="masteryBox"></div>
+  </div>
+</section>
+
+<section class="block" id="custom">
+  <div class="container">
+    <div class="sec-head left" style="margin-bottom:20px">
+      <h2>Custom Test Builder</h2>
+      <p>Configure your own test. Questions are drawn at random from the demo question bank.</p>
+    </div>
+    <form class="filters" id="builderForm" style="flex-direction:column;align-items:stretch;gap:14px">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px">
+        <div class="field" style="margin:0">
+          <label for="bExam">Examination</label>
+          <select id="bExam"><option value="">Any exam</option></select>
+        </div>
+        <div class="field" style="margin:0">
+          <label for="bSubject">Subject</label>
+          <select id="bSubject"><option value="">Any subject</option></select>
+        </div>
+        <div class="field" style="margin:0">
+          <label for="bDiff">Difficulty</label>
+          <select id="bDiff"><option>Mixed</option><option>Easy</option><option>Medium</option><option>Hard</option></select>
+        </div>
+        <div class="field" style="margin:0">
+          <label for="bCount">Questions</label>
+          <select id="bCount"><option>10</option><option selected>20</option><option>25</option><option>50</option><option>100</option></select>
+        </div>
+        <div class="field" style="margin:0">
+          <label for="bDur">Duration (min)</label>
+          <input type="number" id="bDur" value="30" min="5" max="180" />
+        </div>
+        <div class="field" style="margin:0">
+          <label for="bLang">Language</label>
+          <select id="bLang"><option>English</option><option>Hindi</option><option>Bilingual</option></select>
+        </div>
+      </div>
+      <p style="font-size:.78rem;color:var(--text-muted)" id="bHint"></p>
+      <div style="display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap">
+        <button type="reset" class="btn btn-outline">Reset</button>
+        <button type="submit" class="btn btn-primary">Build &amp; Start Custom Test</button>
+      </div>
+    </form>
+  </div>
+</section>
+
+<section class="block" style="background:var(--bg-soft)" id="available">
+  <div class="container">
+    <div class="sec-head left" style="margin-bottom:20px">
+      <h2>Available Tests</h2>
+      <p>Filter by exam, type, difficulty, or access.</p>
+    </div>
+
+    <div class="filters">
+      <input type="search" id="tSearch" placeholder="Search test title…" aria-label="Search tests" />
+      <select id="tExam" aria-label="Exam"><option value="all">All Exams</option></select>
+      <select id="tType" aria-label="Type"><option value="all">All Types</option><option>Full Mock</option><option>Subject</option></select>
+      <select id="tDiff" aria-label="Difficulty"><option value="all">All Difficulties</option><option>Easy</option><option>Medium</option><option>Hard</option></select>
+      <select id="tAccess" aria-label="Access"><option value="all">Free &amp; Premium</option><option>Free</option><option>Premium</option></select>
+      <div class="spacer"></div>
+      <button type="button" class="btn btn-outline" id="tClear">Clear</button>
+    </div>
+
+    <div class="cards" id="tGrid"></div>
+  </div>
+</section>
+
+<div id="site-footer"></div>
+
+<script src="shared.js"></script>
+<script>
+(function () {
+  const bExam = document.getElementById('bExam');
+  const tExam = document.getElementById('tExam');
+  const bSubject = document.getElementById('bSubject');
+  const bLang = document.getElementById('bLang');
+  const bDiff = document.getElementById('bDiff');
+  const bHint = document.getElementById('bHint');
+
+  EXAMS.forEach(e => {
+    bExam.insertAdjacentHTML('beforeend', `<option>${escapeHtml(e.name)}</option>`);
+    tExam.insertAdjacentHTML('beforeend', `<option>${escapeHtml(e.name)}</option>`);
+  });
+  PRACTICE_TOPICS.forEach(t => bSubject.insertAdjacentHTML('beforeend', `<option>${escapeHtml(t.subject)}</option>`));
+
+  /* URL prefill */
+  const params = new URLSearchParams(location.search);
+  if (params.get('exam') && [...tExam.options].some(o => o.value === params.get('exam'))) tExam.value = params.get('exam');
+  renderTestTypes(document.getElementById('typeGrid')); renderMastery(document.getElementById('masteryBox'));
+  const tType = document.getElementById('tType');
+  if (params.get('type') && [...tType.options].some(o => o.value === params.get('type'))) tType.value = params.get('type');
+  const tAccessEl = document.getElementById('tAccess');
+  if (params.get('access') && [...tAccessEl.options].some(o => o.value === params.get('access'))) tAccessEl.value = params.get('access');
+  if (params.get('q')) document.getElementById('tSearch').value = params.get('q');
+
+  /* live hint: how many demo questions match the builder settings */
+  function poolFor() {
+    let pool = QUESTIONS.slice();
+    if (bLang.value === 'Hindi') pool = pool.filter(q => q.subject === 'Hindi');
+    else if (bLang.value === 'English') pool = pool.filter(q => q.subject !== 'Hindi');
+    if (bSubject.value) pool = pool.filter(q => q.subject === bSubject.value);
+    if (bDiff.value !== 'Mixed') pool = pool.filter(q => q.diff === bDiff.value);
+    return pool;
+  }
+  function updateHint() {
+    const n = poolFor().length;
+    bHint.textContent = n ? `${n} demo question${n === 1 ? '' : 's'} match these settings. If you ask for more, your test will use all ${n}.`
+                          : 'No demo questions match these settings yet — try Mixed difficulty, another subject or language.';
+  }
+  [bSubject, bLang, bDiff].forEach(el => el.addEventListener('change', updateHint));
+  document.getElementById('builderForm').addEventListener('reset', () => setTimeout(updateHint, 0));
+  updateHint();
+
+  /* render tests */
+  const tSearch = document.getElementById('tSearch');
+  const tDiff = document.getElementById('tDiff');
+  const tAccess = document.getElementById('tAccess');
+  const tGrid = document.getElementById('tGrid');
+
+  function bestFor(id) {
+    const list = getAttempts().filter(a => a.testId === id);
+    if (!list.length) return null;
+    return list.reduce((b, a) => (a.score > b.score ? a : b), list[0]);
+  }
+
+  function renderTests() {
+    const q = tSearch.value.trim().toLowerCase();
+    const ex = tExam.value, ty = tType.value, d = tDiff.value, a = tAccess.value;
+    const list = TESTS.filter(t =>
+      (!q || t.title.toLowerCase().includes(q) || t.exam.toLowerCase().includes(q)) &&
+      (ex === 'all' || t.exam === ex) &&
+      (ty === 'all' || t.type === ty) &&
+      (d === 'all' || t.diff === d) &&
+      (a === 'all' || t.access === a));
+
+    if (!list.length) {
+      const msg = (ex !== 'all' && !TESTS.some(t => t.exam === ex))
+        ? `<h3>No tests for ${escapeHtml(ex)} yet</h3><p>Tests for this exam are coming soon. Meanwhile you can <a href="practice.html" style="color:var(--purple-600)">practise chapter-wise</a> or <a href="#custom" style="color:var(--purple-600)">build a custom test</a>.</p>`
+        : `<h3>No tests match your filters</h3><p>Try widening the search or clear the filters.</p>`;
+      tGrid.innerHTML = `<div class="empty" style="grid-column:1/-1">${msg}<div class="btn-row"><button type="button" class="btn btn-outline" id="emptyClear">Clear filters</button></div></div>`;
+      document.getElementById('emptyClear').addEventListener('click', clearAll);
+      return;
+    }
+
+    tGrid.innerHTML = list.map(t => {
+      const best = bestFor(t.id);
+      return `
+      <div class="card">
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <span class="badge-pill ${accessClass(t.access)}">${escapeHtml(t.access)}</span>
+          <span class="badge-pill ${diffClass(t.diff)}">${escapeHtml(t.diff)}</span>
+          <span class="badge-pill badge-info">${escapeHtml(t.type)}</span>
+        </div>
+        <h3>${escapeHtml(t.title)}</h3>
+        <p>${escapeHtml(t.exam)} · ${escapeHtml(t.lang)}</p>
+        <div class="meta">
+          <span>${t.q} Q · ${t.dur} min · ${t.marks} marks</span>
+          ${best ? `<span style="color:var(--success);font-weight:600">Best: ${best.score}/${best.max}</span>` : ''}
+        </div>
+        <a href="test-attempt.html?id=${t.id}" class="btn btn-primary" style="margin-top:10px">${best ? 'Retake Test' : 'Start Test'}</a>
+      </div>`;
+    }).join('');
+  }
+
+  function clearAll() {
+    tSearch.value = ''; tExam.value = 'all'; tType.value = 'all'; tDiff.value = 'all'; tAccess.value = 'all';
+    renderTests();
+  }
+
+  [tSearch, tExam, tType, tDiff, tAccess].forEach(el => el.addEventListener('input', renderTests));
+  document.getElementById('tClear').addEventListener('click', clearAll);
+  window.onNavSearch = v => { tSearch.value = v; renderTests(); };
+  renderTests();
+
+  /* custom test builder -> real test runner */
+  document.getElementById('builderForm').addEventListener('submit', e => {
+    e.preventDefault();
+    if (!poolFor().length) { showToast('No questions match these settings. Please change them.'); return; }
+    const dur = Math.min(180, Math.max(5, parseInt(document.getElementById('bDur').value, 10) || 30));
+    const p = new URLSearchParams({ mode: 'custom', diff: bDiff.value, count: document.getElementById('bCount').value, dur: String(dur), lang: bLang.value });
+    if (bExam.value) p.set('exam', bExam.value);
+    if (bSubject.value) p.set('subject', bSubject.value);
+    location.href = 'test-attempt.html?' + p.toString();
+  });
+})();
+</script>
+</body>
+</html>

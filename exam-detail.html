@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Exam Details — ExamPro</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231e3a8a'/%3E%3Cpath d='M9 22V10h13v3h-9v2h8v3h-8v4z' fill='%23fff'/%3E%3Ccircle cx='24' cy='24' r='4' fill='%237c3aed'/%3E%3C/svg%3E" />
+<script>(function(){try{var t=localStorage.getItem('exampro-theme');if(!t&&window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches)t='dark';if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+<link rel="stylesheet" href="shared.css" />
+<link rel="manifest" href="manifest.json" />
+<meta name="theme-color" content="#1e3a8a" />
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+<meta name="mobile-web-app-capable" content="yes" /><meta name="apple-mobile-web-app-capable" content="yes" /><meta name="apple-mobile-web-app-title" content="ExamPro" />
+</head>
+<body data-page="exams" data-search="Search exams…">
+
+<div id="site-header"></div>
+
+<div class="page-head">
+  <div class="container">
+    <div class="breadcrumb"><a href="index.html">Home</a> / <a href="exams.html">All Exams</a> / <span id="crumb">Exam</span></div>
+    <div class="exam-hero" id="hero"><h1>Loading…</h1></div>
+  </div>
+</div>
+
+<section class="block">
+  <div class="container" id="content"></div>
+</section>
+
+<div id="site-footer"></div>
+
+<script src="shared.js"></script>
+<script>
+(function () {
+  const P = new URLSearchParams(location.search);
+  const key = (P.get('exam') || P.get('code') || '').toLowerCase();
+  const exam = EXAMS.find(e => e.name.toLowerCase() === key || e.code.toLowerCase() === key);
+  const hero = document.getElementById('hero'), root = document.getElementById('content');
+
+  if (!exam) {
+    hero.innerHTML = '<h1>Exam not found</h1>';
+    root.innerHTML = `<div class="empty panel" style="padding:50px 20px"><h3>We couldn't find that exam</h3><p>Pick one from the full list.</p><div class="btn-row"><a class="btn btn-primary" href="exams.html">Browse all exams</a></div></div>`;
+    return;
+  }
+
+  document.title = exam.name + ' — Syllabus, Pattern & Tests — ExamPro';
+  document.getElementById('crumb').textContent = exam.name;
+  const info = EXAM_INFO[exam.name] || { full: exam.desc, body: '', edu: 'See the official notification', stages: [], subjects: [] };
+  const tests = TESTS.filter(t => t.exam === exam.name);
+  const user = getUser(), isTarget = user && user.exam === exam.name;
+  const catName = { ssc: 'SSC', railway: 'Railway', bihar: 'Bihar', other: 'Other' }[exam.cat];
+
+  hero.innerHTML = `<div class="exam-icon">${escapeHtml(exam.code)}</div>
+    <div><h1 style="margin-bottom:4px">${escapeHtml(exam.name)}</h1><p style="margin:0">${escapeHtml(info.full)}</p></div>`;
+
+  /* syllabus built from the real chapter list, filtered to subjects of this exam */
+  const subjMap = { 'General Awareness': 'General Awareness', 'Mathematics': 'Mathematics', 'Reasoning': 'Reasoning', 'English': 'English', 'Hindi': 'Hindi', 'General Science': 'General Science',
+    'History': 'General Awareness', 'Geography': 'General Awareness', 'Polity': 'General Awareness', 'Economics': 'General Awareness', 'Current Affairs': 'General Awareness', 'English / Hindi': 'English' };
+  const wanted = new Set((info.subjects || []).map(s => subjMap[s] || s));
+  const topics = PRACTICE_TOPICS.filter(t => !wanted.size || wanted.has(t.subject));
+  const qCount = s => QUESTIONS.filter(q => q.subject === s).length;
+
+  function patternHtml() {
+    const p = info.pattern;
+    if (!p) return `<div class="info-note"><span>A fixed question-by-question pattern is not listed here because it changes between notifications. Check the official notification for the latest pattern, marking scheme and cut-offs.</span>${info.site ? `<a class="btn btn-outline" target="_blank" rel="noopener noreferrer" href="${escapeHtml(info.site)}">Official website ↗</a>` : ''}</div>`;
+    const totalQ = p.rows.reduce((s, r) => s + r[1], 0), totalM = p.rows.reduce((s, r) => s + r[2], 0);
+    return `<h3 style="margin-bottom:10px">${escapeHtml(p.title)}</h3>
+      <div class="kv"><div><b>${totalQ}</b><span>Questions</span></div><div><b>${totalM}</b><span>Marks</span></div><div><b>${p.duration} min</b><span>Duration</span></div><div><b style="font-size:.9rem">${escapeHtml(p.negative)}</b><span>Negative marking</span></div></div>
+      <div class="table-wrap"><table><thead><tr><th>Section</th><th>Questions</th><th>Marks</th></tr></thead><tbody>
+        ${p.rows.map(r => `<tr><td>${escapeHtml(r[0])}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join('')}
+        <tr><td><strong>Total</strong></td><td><strong>${totalQ}</strong></td><td><strong>${totalM}</strong></td></tr></tbody></table></div>
+      <p class="small muted" style="margin-top:10px">Pattern is indicative. Always confirm against the latest official notification${info.site ? ` (<a target="_blank" rel="noopener noreferrer" href="${escapeHtml(info.site)}" style="color:var(--purple-600)">official site ↗</a>)` : ''}.</p>`;
+  }
+
+  const panels = {
+    overview: `
+      <div class="kv"><div><b>${escapeHtml(catName)}</b><span>Category</span></div><div><b>${tests.length}</b><span>Mock tests on ExamPro</span></div><div><b>${(info.stages || []).length || '—'}</b><span>Stages</span></div></div>
+      <div class="widget"><h3>About</h3><p class="muted" style="font-size:.92rem">${escapeHtml(exam.desc)}${info.body ? ' Conducted by ' + escapeHtml(info.body) + '.' : ''}</p></div>
+      <div class="widget"><h3>Eligibility (education)</h3><p class="muted" style="font-size:.92rem">${escapeHtml(info.edu)}</p><p class="small muted">Age limits, relaxations and post-specific rules change every year — read the latest official notification before applying.</p></div>
+      <div class="widget"><h3>Selection stages</h3>${(info.stages || []).length ? `<ol style="padding-left:20px;color:var(--text-muted);font-size:.92rem">${info.stages.map(s => `<li style="margin-bottom:6px">${escapeHtml(s)}</li>`).join('')}</ol>` : '<p class="muted small">See the official notification.</p>'}</div>`,
+    syllabus: `
+      <div class="widget"><h3>Subjects covered</h3><div class="sub">Typical papers for ${escapeHtml(exam.name)}</div>
+        <div class="row" style="gap:8px">${(info.subjects || []).map(s => `<span class="badge-pill badge-info">${escapeHtml(s)}</span>`).join('') || '<span class="muted small">See the official notification.</span>'}</div></div>
+      ${topics.map(t => `<div class="subject-block"><div class="subject-head"><div class="subject-ico">${t.icon}</div><div><h3>${escapeHtml(t.subject)}</h3><div class="small muted">${t.chapters.length} chapters · ${qCount(t.subject)} practice questions on ExamPro</div></div>
+          <div style="margin-left:auto"><a class="btn btn-outline" href="materials.html?subject=${encodeURIComponent(t.subject)}">Notes</a></div></div>
+        <div class="chapter-chips">${t.chapters.map(c => { const n = QUESTIONS.filter(q => q.subject === t.subject && q.chapter === c).length;
+          return n ? `<a class="chapter-chip" href="test-attempt.html?mode=practice&subject=${encodeURIComponent(t.subject)}&chapter=${encodeURIComponent(c)}">${escapeHtml(c)} · ${n} Q →</a>` : `<span class="chapter-chip disabled">${escapeHtml(c)} · soon</span>`; }).join('')}</div></div>`).join('')}`,
+    pattern: `<div class="widget">${patternHtml()}</div>`,
+    tests: tests.length ? `<div class="cards">${tests.map(t => `<div class="card"><div class="row" style="gap:6px"><span class="badge-pill ${accessClass(t.access)}">${t.access}</span><span class="badge-pill ${diffClass(t.diff)}">${t.diff}</span><span class="badge-pill badge-info">${escapeHtml(t.type)}</span></div>
+        <h3>${escapeHtml(t.title)}</h3><p>${escapeHtml(t.exam)} · ${escapeHtml(t.lang)}</p><div class="meta"><span>${t.q} Q · ${t.dur} min · ${t.marks} marks</span></div>
+        <a class="btn btn-primary" href="test-attempt.html?id=${t.id}">Start Test</a></div>`).join('')}</div>`
+      : `<div class="empty panel" style="padding:44px 20px"><h3>No full tests for ${escapeHtml(exam.name)} yet</h3><p>They are coming soon. You can still practise the relevant subjects or build your own test.</p>
+          <div class="btn-row"><a class="btn btn-primary" href="tests.html?exam=${encodeURIComponent(exam.name)}#custom">Build a custom test</a><a class="btn btn-outline" href="practice.html">Practice by chapter</a></div></div>`,
+    tips: `<div class="widget"><h3>Preparation roadmap</h3><ol style="padding-left:20px;color:var(--text-muted);font-size:.92rem">
+        <li style="margin-bottom:8px"><strong>Week 1–2:</strong> read the notes for each subject once; mark chapters you find hard.</li>
+        <li style="margin-bottom:8px"><strong>Week 3–6:</strong> chapter-wise practice daily; keep a list of formulas and facts you forget.</li>
+        <li style="margin-bottom:8px"><strong>Week 7+:</strong> take a full mock test every few days, then spend twice as long reviewing it as you spent taking it.</li>
+        <li><strong>Always:</strong> retry your incorrect questions weekly and read current affairs every day.</li></ol></div>
+      <div class="row"><a class="btn btn-outline" href="materials.html">Study material</a><a class="btn btn-outline" href="current-affairs.html">Current affairs</a><a class="btn btn-outline" href="papers.html">Previous papers</a></div>`
+  };
+
+  const tabs = [['overview', 'Overview'], ['syllabus', 'Syllabus'], ['pattern', 'Exam Pattern'], ['tests', 'Mock Tests (' + tests.length + ')'], ['tips', 'Preparation']];
+  root.innerHTML = `
+    <div class="dash-grid">
+      <div>
+        <div class="tabs" id="tabs" role="tablist">${tabs.map((t, i) => `<button type="button" class="tab${i === 0 ? ' active' : ''}" data-tab="${t[0]}" role="tab">${t[1]}</button>`).join('')}</div>
+        ${tabs.map((t, i) => `<div class="tab-panel${i === 0 ? ' on' : ''}" id="p-${t[0]}">${panels[t[0]]}</div>`).join('')}
+      </div>
+      <div>
+        <div class="widget"><h3>Get started</h3><div class="sub">Practise for ${escapeHtml(exam.name)}</div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            ${tests[0] ? `<a class="btn btn-primary btn-lg" href="test-attempt.html?id=${tests[0].id}">Start a mock test</a>` : `<a class="btn btn-primary btn-lg" href="tests.html?exam=${encodeURIComponent(exam.name)}#custom">Build a custom test</a>`}
+            <a class="btn btn-outline" href="test-attempt.html?mode=daily">Daily practice</a>
+            <button type="button" class="btn ${isTarget ? 'btn-outline' : 'btn-outline'}" id="targetBtn">${isTarget ? '✓ This is your target exam' : '🎯 Set as my target exam'}</button></div></div>
+        ${info.site ? `<div class="widget"><h3>Official source</h3><p class="small muted" style="margin-bottom:10px">Notifications, dates and syllabus are published by the conducting body.</p><a class="btn btn-outline" target="_blank" rel="noopener noreferrer" href="${escapeHtml(info.site)}">Visit official site ↗</a></div>` : ''}
+        <div class="widget"><h3>Other ${escapeHtml(catName)} exams</h3>${EXAMS.filter(e => e.cat === exam.cat && e.name !== exam.name).map(e => `<div class="list-row"><div class="grow"><a class="t" href="exam-detail.html?exam=${encodeURIComponent(e.name)}">${escapeHtml(e.name)}</a></div><span class="small muted">${e.tests} test${e.tests === 1 ? '' : 's'}</span></div>`).join('')}</div>
+      </div>
+    </div>`;
+
+  document.getElementById('tabs').addEventListener('click', e => {
+    const b = e.target.closest('.tab'); if (!b) return;
+    document.querySelectorAll('#tabs .tab').forEach(t => t.classList.toggle('active', t === b));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('on', p.id === 'p-' + b.dataset.tab));
+    try { history.replaceState(null, '', '#' + b.dataset.tab); } catch (x) {}
+  });
+  const h = location.hash.replace('#', ''); if (h && document.querySelector(`[data-tab="${h}"]`)) document.querySelector(`[data-tab="${h}"]`).click();
+
+  document.getElementById('targetBtn').addEventListener('click', () => {
+    if (!getUser()) { location.href = 'login.html?next=' + encodeURIComponent('exam-detail.html?exam=' + exam.name); return; }
+    setUser({ exam: exam.name }); showToast(exam.name + ' set as your target exam');
+    const b = document.getElementById('targetBtn'); b.textContent = '✓ This is your target exam';
+  });
+})();
+</script>
+</body>
+</html>

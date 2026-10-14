@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Redirecting… — ExamPro</title>
+<script>
+  (function () {
+    var map = { about:'about.html', contact:'contact.html', support:'contact.html#faq', careers:'about.html#careers',
+                privacy:'privacy.html', terms:'terms.html', refund:'refund.html' };
+    var h = (location.hash || '').replace('#', '');
+    location.replace(map[h] || 'about.html');
+  })();
+</script>
+</head>
+<body><p style="font-family:sans-serif;padding:24px">Redirecting… <a href="about.html">About ExamPro</a></p></body>
+</html>

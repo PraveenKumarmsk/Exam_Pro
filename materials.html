@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Study Material — ExamPro</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231e3a8a'/%3E%3Cpath d='M9 22V10h13v3h-9v2h8v3h-8v4z' fill='%23fff'/%3E%3Ccircle cx='24' cy='24' r='4' fill='%237c3aed'/%3E%3C/svg%3E" />
+<script>(function(){try{var t=localStorage.getItem('exampro-theme');if(!t&&window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches)t='dark';if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+<link rel="stylesheet" href="shared.css" />
+<link rel="manifest" href="manifest.json" />
+<meta name="theme-color" content="#1e3a8a" />
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+<meta name="mobile-web-app-capable" content="yes" /><meta name="apple-mobile-web-app-capable" content="yes" /><meta name="apple-mobile-web-app-title" content="ExamPro" />
+</head>
+<body data-page="materials" data-search="Search notes…">
+
+<div id="site-header"></div>
+
+<div class="page-head">
+  <div class="container">
+    <div class="breadcrumb"><a href="index.html">Home</a> / Study Material</div>
+    <h1>Study Material</h1>
+    <p>Short, exam-focused notes and formula sheets. Search, bookmark, mark as read, print — then test yourself on the same chapter.</p>
+  </div>
+</div>
+
+<section class="block">
+  <div class="container">
+    <div class="filters">
+      <input type="search" id="nSearch" placeholder="Search notes, formulas, facts…" aria-label="Search notes" />
+      <select id="nView" aria-label="Show">
+        <option value="all">All notes</option><option value="bm">★ Bookmarked</option><option value="unread">Not read yet</option><option value="read">Read</option>
+      </select>
+      <div class="spacer"></div>
+      <span class="small muted" id="progress"></span>
+      <button type="button" class="btn btn-outline" id="nClear">Clear</button>
+    </div>
+
+    <div class="notes-layout">
+      <aside class="notes-side" id="subjects" aria-label="Subjects"></aside>
+      <div id="notes"></div>
+    </div>
+  </div>
+</section>
+
+<div id="site-footer"></div>
+
+<script src="shared.js"></script>
+<script>
+(function () {
+  const list = document.getElementById('notes'), side = document.getElementById('subjects');
+  const nSearch = document.getElementById('nSearch'), nView = document.getElementById('nView'), prog = document.getElementById('progress');
+  let subject = 'all';
+  const readSet = new Set(store.get('exampro-notes-read', []) || []);
+  const bmSet = new Set(store.get('exampro-notes-bm', []) || []);
+  const P = new URLSearchParams(location.search);
+  if (P.get('subject')) subject = P.get('subject');
+  if (P.get('q')) nSearch.value = P.get('q');
+
+  const saveSets = () => { store.set('exampro-notes-read', [...readSet]); store.set('exampro-notes-bm', [...bmSet]); };
+
+  function blockHtml(b) {
+    switch (b[0]) {
+      case 'h': return `<h4>${escapeHtml(b[1])}</h4>`;
+      case 'p': return `<p>${escapeHtml(b[1])}</p>`;
+      case 'f': return `<div class="formula">${escapeHtml(b[1])}</div>`;
+      case 'ul': return `<ul>${b[1].map(x => `<li>${escapeHtml(x)}</li>`).join('')}</ul>`;
+      case 'table': return `<div class="table-wrap"><table><thead><tr>${b[1].head.map(h => `<th>${escapeHtml(h)}</th>`).join('')}</tr></thead><tbody>${b[1].rows.map(r => `<tr>${r.map(c => `<td>${escapeHtml(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+      default: return '';
+    }
+  }
+  function plain(n) {
+    return (n.title + ' ' + n.subject + ' ' + n.chapter + ' ' + n.body.map(b => b[0] === 'ul' ? b[1].join(' ') : b[0] === 'table' ? b[1].head.join(' ') + ' ' + b[1].rows.map(r => r.join(' ')).join(' ') : b[1]).join(' ')).toLowerCase();
+  }
+
+  function sidebar() {
+    const subs = [...new Set(NOTES.map(n => n.subject))];
+    side.innerHTML = `<button type="button" data-s="all" class="${subject === 'all' ? 'on' : ''}"><span>All subjects</span><span>${NOTES.length}</span></button>` +
+      subs.map(s => `<button type="button" data-s="${escapeHtml(s)}" class="${subject === s ? 'on' : ''}"><span>${escapeHtml(s)}</span><span>${NOTES.filter(n => n.subject === s).length}</span></button>`).join('');
+  }
+
+  function render() {
+    const q = nSearch.value.trim().toLowerCase(), v = nView.value;
+    const items = NOTES.filter(n => (subject === 'all' || n.subject === subject) && (!q || plain(n).includes(q)) &&
+      (v === 'all' || (v === 'bm' && bmSet.has(n.id)) || (v === 'read' && readSet.has(n.id)) || (v === 'unread' && !readSet.has(n.id))));
+    prog.textContent = `${NOTES.filter(n => readSet.has(n.id)).length} of ${NOTES.length} read`;
+    sidebar();
+    if (!items.length) { list.innerHTML = `<div class="empty panel"><h3>No notes found</h3><p>Try another subject or search term.</p></div>`; return; }
+    list.innerHTML = items.map(n => `
+      <article class="note-card${readSet.has(n.id) ? ' read' : ''}" id="${n.id}">
+        <div class="note-head">
+          <div><div class="row" style="gap:6px;margin-bottom:6px"><span class="badge-pill badge-info">${escapeHtml(n.subject)}</span><span class="badge-pill badge-free">${n.mins} min read</span></div><h3>${escapeHtml(n.title)}</h3></div>
+          <button type="button" class="q-bookmark${bmSet.has(n.id) ? ' on' : ''}" data-bm="${n.id}" aria-label="Bookmark note" title="Bookmark">${bmSet.has(n.id) ? '★' : '☆'}</button>
+        </div>
+        <div class="note-body">${n.body.map(blockHtml).join('')}</div>
+        <div class="note-actions no-print">
+          <button type="button" class="btn ${readSet.has(n.id) ? 'btn-outline' : 'btn-primary'}" data-read="${n.id}">${readSet.has(n.id) ? '✓ Read — undo' : 'Mark as read'}</button>
+          <a class="btn btn-outline" href="test-attempt.html?mode=practice&subject=${encodeURIComponent(n.subject)}&chapter=${encodeURIComponent(n.chapter)}">Practise this chapter</a>
+          <button type="button" class="btn btn-ghost" data-print="${n.id}">Print</button>
+        </div>
+      </article>`).join('');
+    if (location.hash && document.querySelector(location.hash)) document.querySelector(location.hash).scrollIntoView();
+  }
+
+  side.addEventListener('click', e => { const b = e.target.closest('[data-s]'); if (!b) return; subject = b.dataset.s; render(); });
+  list.addEventListener('click', e => {
+    const r = e.target.closest('[data-read]'), b = e.target.closest('[data-bm]'), p = e.target.closest('[data-print]');
+    if (r) { const id = r.dataset.read; if (readSet.has(id)) readSet.delete(id); else readSet.add(id); saveSets(); render(); }
+    if (b) { const id = b.dataset.bm; if (bmSet.has(id)) bmSet.delete(id); else bmSet.add(id); saveSets(); showToast(bmSet.has(id) ? 'Note bookmarked' : 'Bookmark removed'); render(); }
+    if (p) {
+      document.querySelectorAll('.note-card').forEach(c => { if (c.id !== p.dataset.print) c.classList.add('hide'); });
+      window.print();
+      document.querySelectorAll('.note-card.hide').forEach(c => c.classList.remove('hide'));
+    }
+  });
+  [nSearch, nView].forEach(el => el.addEventListener('input', render));
+  document.getElementById('nClear').addEventListener('click', () => { nSearch.value = ''; nView.value = 'all'; subject = 'all'; const ns = document.getElementById('navSearch'); if (ns) ns.value = ''; render(); });
+  window.onNavSearch = v => { nSearch.value = v; render(); };
+  render();
+})();
+</script>
+</body>
+</html>

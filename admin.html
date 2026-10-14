@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="robots" content="noindex,nofollow" />
+<title>Admin — ExamPro</title>
+<link rel="icon" href="icons/favicon-48.png" />
+<script>(function(){try{var t=localStorage.getItem('exampro-theme');if(!t&&window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches)t='dark';if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+<link rel="stylesheet" href="shared.css" />
+<link rel="manifest" href="manifest.json" />
+<meta name="theme-color" content="#1e3a8a" />
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+</head>
+<body data-page="admin" data-search="Search…">
+<div id="site-header"></div>
+
+<main class="container">
+  <!-- GATE -->
+  <div id="gate" class="adm-gate adm-box hide">
+    <h2 id="gateTitle" style="font-size:1.25rem">Admin sign-in</h2>
+    <p class="small muted" id="gateSub" style="margin:6px 0 12px"></p>
+    <input type="password" id="gPass" placeholder="Passcode" autocomplete="current-password" />
+    <input type="password" id="gPass2" placeholder="Repeat passcode" class="hide" style="margin-top:8px" autocomplete="new-password" />
+    <button type="button" class="btn btn-primary" id="gBtn" style="width:100%;margin-top:12px">Continue</button>
+    <p class="small muted" id="gErr" style="color:var(--danger);margin-top:8px"></p>
+    <div class="adm-note">This passcode only stops casual clicking. It is checked inside the browser, so anyone who can open the site's files can bypass it. Never store anything secret here. Real protection needs a server.</div>
+  </div>
+
+  <!-- APP -->
+  <div id="app" class="adm-shell hide">
+    <nav class="adm-tabs" id="tabs" aria-label="Admin sections">
+      <button type="button" data-t="dash" class="on">📊 Dashboard</button>
+      <button type="button" data-t="ann">📣 Announcement</button>
+      <button type="button" data-t="promo">🖼️ Promo slides</button>
+      <button type="button" data-t="qs">❓ Questions</button>
+      <button type="button" data-t="tests">🎯 Mock tests</button>
+      <button type="button" data-t="msgs">✉️ Messages</button>
+      <button type="button" data-t="set">⚙️ Settings</button>
+      <button type="button" data-t="pub">🚀 Publish</button>
+      <button type="button" id="lockBtn">🔒 Lock</button>
+    </nav>
+    <div>
+      <div id="dirty" class="adm-note hide"></div>
+
+      <!-- DASHBOARD -->
+      <section class="adm-pane on" id="p-dash">
+        <h2>Dashboard</h2>
+        <div class="adm-note">Visitor numbers here are counted <b>in this browser only</b> (this device). They are not site-wide. For real visitor totals across all users, add a Google Analytics ID in Settings or use a backend.</div>
+        <h3 style="margin-top:14px">Traffic (this browser)</h3>
+        <div class="adm-kpis" id="kTraffic"></div>
+        <div class="adm-box"><h3>Page views — last 14 days</h3><div id="chart14"></div></div>
+        <div class="row" style="align-items:stretch">
+          <div class="adm-box" style="flex:1;min-width:260px"><h3>Top pages</h3><div id="topPages"></div></div>
+          <div class="adm-box" style="flex:1;min-width:260px"><h3>Events</h3><div id="evCounts"></div></div>
+        </div>
+        <h3 style="margin-top:6px">Learning activity (this browser)</h3>
+        <div class="adm-kpis" id="kLearn"></div>
+        <h3>Site content</h3>
+        <div class="adm-kpis" id="kContent"></div>
+        <div class="adm-box"><h3>Recent events</h3><div class="adm-scroll"><table class="adm-table" id="evLog"></table></div></div>
+        <button type="button" class="btn btn-outline" id="resetMetrics">Reset traffic counters</button>
+      </section>
+
+      <!-- ANNOUNCEMENT -->
+      <section class="adm-pane" id="p-ann">
+        <h2>Announcement bar</h2><p class="small muted">Shows a dismissible banner at the top of every page.</p>
+        <div class="adm-box adm-form">
+          <div class="full"><label><input type="checkbox" id="aOn" style="width:auto;margin-right:6px">Show announcement</label></div>
+          <div class="full"><label for="aText">Text</label><input id="aText" type="text" maxlength="160" /></div>
+          <div class="full"><label for="aLink">Link (optional, e.g. tests.html)</label><input id="aLink" type="text" /></div>
+        </div>
+      </section>
+
+      <!-- PROMOS -->
+      <section class="adm-pane" id="p-promo">
+        <h2>Promo slides</h2><p class="small muted">Home page carousel. Image size about 1200×400, saved in the <code>images/</code> folder (e.g. <code>images/promo-1.jpg</code>). If the image is missing, a coloured card with your text shows instead.</p>
+        <div class="row" style="margin:10px 0"><button type="button" class="btn btn-outline" id="promoDefault">Reset to default slides</button><button type="button" class="btn btn-primary" id="promoAdd">+ Add slide</button></div>
+        <div id="promoList"></div>
+      </section>
+
+      <!-- QUESTIONS -->
+      <section class="adm-pane" id="p-qs">
+        <h2>Questions</h2><p class="small muted">Add your own questions. They are merged into practice and mock tests after you publish.</p>
+        <form class="adm-box adm-form" id="qForm">
+          <div><label for="qSub">Subject</label><select id="qSub"></select></div>
+          <div><label for="qCh">Chapter</label><select id="qCh"></select></div>
+          <div><label for="qDiff">Difficulty</label><select id="qDiff"><option>Easy</option><option selected>Medium</option><option>Hard</option></select></div>
+          <div><label><input type="checkbox" id="qImp" style="width:auto;margin-right:6px">Mark as important</label></div>
+          <div class="full"><label for="qText">Question</label><textarea id="qText" required></textarea></div>
+          <div><label for="qo0">Option A</label><input id="qo0" required /></div>
+          <div><label for="qo1">Option B</label><input id="qo1" required /></div>
+          <div><label for="qo2">Option C</label><input id="qo2" required /></div>
+          <div><label for="qo3">Option D</label><input id="qo3" required /></div>
+          <div><label for="qAns">Correct answer</label><select id="qAns"><option value="0">A</option><option value="1">B</option><option value="2">C</option><option value="3">D</option></select></div>
+          <div class="full"><label for="qExp">Explanation</label><textarea id="qExp"></textarea></div>
+          <div class="full"><button class="btn btn-primary" type="submit">Add question</button></div>
+        </form>
+        <div class="adm-box"><h3>Your questions (<span id="qCount">0</span>)</h3><div class="adm-scroll"><table class="adm-table" id="qTable"></table></div></div>
+      </section>
+
+      <!-- TESTS -->
+      <section class="adm-pane" id="p-tests">
+        <h2>Mock tests</h2><p class="small muted">Build a test from your own questions and the built-in ones.</p>
+        <form class="adm-box adm-form" id="tForm">
+          <div class="full"><label for="tTitle">Title</label><input id="tTitle" required /></div>
+          <div><label for="tExam">Exam</label><select id="tExam"></select></div>
+          <div><label for="tDur">Duration (min)</label><input id="tDur" type="number" min="5" max="180" value="30" /></div>
+          <div><label for="tDiff">Difficulty</label><select id="tDiff"><option>Easy</option><option selected>Medium</option><option>Hard</option></select></div>
+          <div><label for="tAcc">Access</label><select id="tAcc"><option>Free</option><option>Premium</option></select></div>
+          <div class="full"><label>Choose questions (<span id="tSel">0</span> selected)</label>
+            <input id="tFilter" type="text" placeholder="Filter by text, subject or chapter…" style="margin-bottom:6px" />
+            <div class="adm-scroll" style="max-height:300px;overflow-y:auto;border:1px solid var(--border);border-radius:10px"><table class="adm-table" id="tPick"></table></div></div>
+          <div class="full"><button class="btn btn-primary" type="submit">Add test</button></div>
+        </form>
+        <div class="adm-box"><h3>Your tests</h3><div class="adm-scroll"><table class="adm-table" id="tTable"></table></div></div>
+      </section>
+
+      <!-- MESSAGES -->
+      <section class="adm-pane" id="p-msgs">
+        <h2>Contact messages</h2>
+        <div class="adm-note">Only messages sent from this browser appear here. A static site cannot receive other visitors' messages. Set a contact email in Settings so people can email you.</div>
+        <div class="adm-box"><div class="adm-scroll"><table class="adm-table" id="mTable"></table></div></div>
+      </section>
+
+      <!-- SETTINGS -->
+      <section class="adm-pane" id="p-set">
+        <h2>Settings</h2>
+        <div class="adm-box adm-form">
+          <div class="full"><label for="sGa">Google Analytics measurement ID (G-XXXXXXXXXX)</label><input id="sGa" type="text" placeholder="G-XXXXXXXXXX" /></div>
+          <div class="full"><label for="sMail">Public contact email (shown on the Contact page)</label><input id="sMail" type="text" placeholder="you@example.com" /></div>
+        </div>
+        <div class="adm-box"><h3>Change passcode</h3>
+          <input type="password" id="npPass" placeholder="New passcode (min 6 characters)" autocomplete="new-password" />
+          <button type="button" class="btn btn-outline" id="npBtn" style="margin-top:8px">Update passcode</button></div>
+      </section>
+
+      <!-- PUBLISH -->
+      <section class="adm-pane" id="p-pub">
+        <h2>Publish updates</h2>
+        <div class="adm-note"><b>How publishing works.</b> Your edits are saved as a <b>draft in this browser</b> and you see them on the site right away (a yellow ribbon shows). To make them live for everyone: download <code>content.json</code>, replace the file of the same name in your project folder, and re-upload or redeploy the site. Visitors cannot get your changes any other way, because this site has no server.</div>
+        <div class="adm-box">
+          <div class="row">
+            <button type="button" class="btn btn-primary" id="pubDownload">⬇ Download content.json</button>
+            <button type="button" class="btn btn-outline" id="pubImport">⬆ Import content.json</button>
+            <button type="button" class="btn btn-outline" id="pubDiscard">Discard draft</button>
+          </div>
+          <input type="file" id="pubFile" accept=".json,application/json" class="hide" />
+          <p class="small muted" style="margin-top:10px" id="pubSum"></p>
+        </div>
+      </section>
+    </div>
+  </div>
+</main>
+
+<div id="site-footer"></div>
+<script src="shared.js"></script>
+<script>
+(function () {
+  const $ = id => document.getElementById(id);
+  const HASH = 'exampro-admin-hash', UNL = 'exampro-admin-ok';
+  const esc = escapeHtml;
+
+  /* ---------- passcode gate ---------- */
+  async function sha(s) {
+    try { const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('exampro:' + s)); return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, '0')).join(''); }
+    catch (e) { let h = 5381; for (const c of 'exampro:' + s) h = ((h << 5) + h + c.charCodeAt(0)) | 0; return 'w' + h; }
+  }
+  const unlocked = () => { try { return sessionStorage.getItem(UNL) === '1'; } catch (e) { return false; } };
+  function gate() {
+    if (unlocked()) { start(); return; }
+    $('gate').classList.remove('hide'); $('app').classList.add('hide');
+    const has = !!store.get(HASH, null);
+    $('gateTitle').textContent = has ? 'Admin sign-in' : 'Set an admin passcode';
+    $('gateSub').textContent = has ? 'Enter your passcode.' : 'First time here. Choose a passcode (min 6 characters).';
+    $('gPass2').classList.toggle('hide', has);
+  }
+  $('gBtn').addEventListener('click', async () => {
+    const p = $('gPass').value, has = store.get(HASH, null); $('gErr').textContent = '';
+    if (has) {
+      if (await sha(p) !== has) { $('gErr').textContent = 'Wrong passcode.'; return; }
+    } else {
+      if (p.length < 6) { $('gErr').textContent = 'Use at least 6 characters.'; return; }
+      if (p !== $('gPass2').value) { $('gErr').textContent = 'Passcodes do not match.'; return; }
+      store.set(HASH, await sha(p));
+    }
+    try { sessionStorage.setItem(UNL, '1'); } catch (e) {}
+    $('gPass').value = ''; $('gPass2').value = ''; $('gate').classList.add('hide'); start();
+  });
+  $('gPass').addEventListener('keydown', e => { if (e.key === 'Enter') $('gBtn').click(); });
+  $('gPass2').addEventListener('keydown', e => { if (e.key === 'Enter') $('gBtn').click(); });
+  $('lockBtn').addEventListener('click', () => { try { sessionStorage.removeItem(UNL); } catch (e) {} location.reload(); });
+  $('npBtn').addEventListener('click', async () => {
+    const p = $('npPass').value; if (p.length < 6) { showToast('Use at least 6 characters'); return; }
+    store.set(HASH, await sha(p)); $('npPass').value = ''; showToast('Passcode updated');
+  });
+
+  /* ---------- working copy of content (draft) ---------- */
+  let W;
+  function clone(o) { return JSON.parse(JSON.stringify(o)); }
+  function norm(c) {
+    c = c && typeof c === 'object' ? c : {};
+    return { announcement: Object.assign({ on: false, id: 'a1', text: '', link: '' }, c.announcement || {}), promos: Array.isArray(c.promos) ? c.promos : null,
+      questions: Array.isArray(c.questions) ? c.questions : [], tests: Array.isArray(c.tests) ? c.tests : [], settings: Object.assign({ gaId: '', contactEmail: '' }, c.settings || {}) };
+  }
+  function saveDraft() { store.set('exampro-content-draft', W); markDirty(); }
+  function markDirty() {
+    const d = store.get('exampro-content-draft', null);
+    $('dirty').classList.toggle('hide', !d);
+    $('dirty').innerHTML = d ? 'You have an unpublished draft in this browser. Go to <b>Publish</b> to download <code>content.json</code>.' : '';
+    $('pubSum').textContent = `Draft contains: ${W.questions.length} custom question(s), ${W.tests.length} custom test(s), ${W.promos ? W.promos.length : 'default'} promo slide(s), announcement ${W.announcement.on ? 'on' : 'off'}.`;
+  }
+
+  function start() {
+    $('app').classList.remove('hide');
+    W = norm(store.get('exampro-content-draft', null) || CONTENT);
+    delete W.__draft;
+    renderAll(); markDirty();
+  }
+
+  /* ---------- tabs ---------- */
+  $('tabs').addEventListener('click', e => {
+    const b = e.target.closest('button[data-t]'); if (!b) return;
+    document.querySelectorAll('#tabs button[data-t]').forEach(x => x.classList.toggle('on', x === b));
+    document.querySelectorAll('.adm-pane').forEach(p => p.classList.toggle('on', p.id === 'p-' + b.dataset.t));
+    if (b.dataset.t === 'dash') renderDash();
+  });
+  if (location.hash === '#publish') setTimeout(() => { const b = document.querySelector('[data-t=pub]'); if (b && unlocked()) b.click(); }, 0);
+
+  function renderAll() { renderDash(); renderAnn(); renderPromos(); renderQs(); renderTests(); renderMsgs(); renderSettings(); }
+
+  /* ---------- dashboard ---------- */
+  const kpi = (n, l) => `<div class="adm-kpi"><b>${n}</b><span>${l}</span></div>`;
+  function barRows(rows, empty) {
+    if (!rows.length) return `<p class="small muted">${empty}</p>`;
+    const mx = Math.max(...rows.map(r => r[1]), 1);
+    return rows.map(r => `<div class="adm-bar"><span title="${esc(r[0])}">${esc(r[0])}</span><i style="width:${Math.max(2, r[1] / mx * 55)}%"></i><b>${r[1]}</b></div>`).join('');
+  }
+  function renderDash() {
+    const m = metricsGet(), att = getAttempts(), users = Object.keys(store.get('exampro-users', {}) || {}), msgs = store.get('exampro-messages', []) || [];
+    const today = dayKey(new Date()), ev = m.ev.counts;
+    $('kTraffic').innerHTML = kpi(m.v.total, 'Page views') + kpi(m.sessions, 'Sessions') + kpi(m.v.days[today] || 0, 'Views today') + kpi(ev.install_accepted || 0, 'App installs') + kpi(ev.register || 0, 'Sign-ups') + kpi(ev.login || 0, 'Logins');
+    const days = []; for (let i = 13; i >= 0; i--) { const d = new Date(); d.setDate(d.getDate() - i); days.push([d, m.v.days[dayKey(d)] || 0]); }
+    const mx = Math.max(...days.map(d => d[1]), 1);
+    $('chart14').innerHTML = `<div style="display:flex;align-items:flex-end;gap:5px;height:130px">${days.map(d => `<div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%" title="${d[0].toDateString()}: ${d[1]}"><span class="small muted" style="font-size:.68rem">${d[1] || ''}</span><div style="width:100%;height:${Math.max(2, d[1] / mx * 100)}px;background:linear-gradient(180deg,var(--purple-500),var(--navy-700));border-radius:5px 5px 0 0;opacity:${d[1] ? 1 : .25}"></div></div>`).join('')}</div>
+      <div style="display:flex;gap:5px;margin-top:4px">${days.map(d => `<span style="flex:1;text-align:center;font-size:.64rem;color:var(--text-muted)">${d[0].getDate()}</span>`).join('')}</div>`;
+    $('topPages').innerHTML = barRows(Object.entries(m.v.pages).sort((a, b) => b[1] - a[1]).slice(0, 8), 'No views recorded yet.');
+    $('evCounts').innerHTML = barRows(Object.entries(ev).sort((a, b) => b[1] - a[1]), 'No events yet.');
+    const done = att.length, avg = done ? Math.round(att.reduce((s, a) => s + (a.total ? a.correct / a.total * 100 : 0), 0) / done) : 0;
+    $('kLearn').innerHTML = kpi(ev.test_start || 0, 'Tests started') + kpi(done, 'Tests finished') + kpi(done ? avg + '%' : '–', 'Average score') + kpi(users.length, 'Accounts (this browser)') + kpi(msgs.length, 'Messages (this browser)') + kpi(getWrong().length, 'Saved wrong answers');
+    const bySubj = {}; QUESTIONS.forEach(q => bySubj[q.subject] = (bySubj[q.subject] || 0) + 1);
+    $('kContent').innerHTML = kpi(EXAMS.length, 'Exams') + kpi(TESTS.length, 'Mock tests') + kpi(QUESTIONS.length, 'Questions') + kpi(NOTES.length, 'Study notes') + kpi(W.questions.length, 'Your added questions') + kpi(W.tests.length, 'Your added tests');
+    $('evLog').innerHTML = '<tr><th>When</th><th>Event</th><th>Detail</th></tr>' + (m.ev.log.slice(0, 15).map(l => `<tr><td>${esc(new Date(l.t).toLocaleString('en-IN'))}</td><td>${esc(l.n)}</td><td>${esc(typeof l.d === 'object' ? JSON.stringify(l.d) : l.d)}</td></tr>`).join('') || '<tr><td colspan="3" class="muted">Nothing yet.</td></tr>');
+  }
+  $('resetMetrics').addEventListener('click', () => { if (confirm('Reset traffic counters for this browser?')) { store.del('exampro-metrics'); renderDash(); } });
+
+  /* ---------- announcement ---------- */
+  function renderAnn() { $('aOn').checked = !!W.announcement.on; $('aText').value = W.announcement.text || ''; $('aLink').value = W.announcement.link || ''; }
+  ['aOn', 'aText', 'aLink'].forEach(id => $(id).addEventListener('input', () => {
+    const a = W.announcement, changed = a.text !== $('aText').value;
+    a.on = $('aOn').checked; a.text = $('aText').value.trim(); a.link = $('aLink').value.trim();
+    if (changed) a.id = 'a' + Date.now().toString(36); /* new text re-shows for people who dismissed the old one */
+    saveDraft();
+  }));
+
+  /* ---------- promos ---------- */
+  function promoList() { return W.promos || clone(DEFAULT_PROMOS); }
+  function renderPromos() {
+    const list = promoList();
+    $('promoList').innerHTML = list.map((p, i) => `<div class="adm-box adm-form" data-i="${i}">
+      <div><label>Badge</label><input data-f="badge" value="${esc(p.badge || '')}"></div>
+      <div><label>Emoji (fallback)</label><input data-f="emoji" value="${esc(p.emoji || '')}"></div>
+      <div class="full"><label>Title</label><input data-f="title" value="${esc(p.title || '')}"></div>
+      <div class="full"><label>Subtitle</label><input data-f="sub" value="${esc(p.sub || '')}"></div>
+      <div><label>Button text</label><input data-f="cta" value="${esc(p.cta || '')}"></div>
+      <div><label>Link</label><input data-f="href" value="${esc(p.href || '')}"></div>
+      <div class="full"><label>Image path (e.g. images/promo-1.jpg, optional)</label><input data-f="img" value="${esc(p.img || '')}"></div>
+      <div class="full row"><button type="button" class="btn btn-outline" data-a="up">↑</button><button type="button" class="btn btn-outline" data-a="down">↓</button><button type="button" class="btn btn-danger" data-a="del">Remove</button></div></div>`).join('') || '<p class="muted">No slides.</p>';
+  }
+  $('promoList').addEventListener('input', e => {
+    const box = e.target.closest('[data-i]'); if (!box || !e.target.dataset.f) return;
+    if (!W.promos) W.promos = clone(DEFAULT_PROMOS);
+    W.promos[+box.dataset.i][e.target.dataset.f] = e.target.value; saveDraft();
+  });
+  $('promoList').addEventListener('click', e => {
+    const b = e.target.closest('[data-a]'); if (!b) return; const i = +b.closest('[data-i]').dataset.i;
+    if (!W.promos) W.promos = clone(DEFAULT_PROMOS);
+    if (b.dataset.a === 'del') W.promos.splice(i, 1);
+    else { const j = b.dataset.a === 'up' ? i - 1 : i + 1; if (j < 0 || j >= W.promos.length) return; [W.promos[i], W.promos[j]] = [W.promos[j], W.promos[i]]; }
+    if (!W.promos.length) W.promos = null;
+    saveDraft(); renderPromos();
+  });
+  $('promoAdd').addEventListener('click', () => { if (!W.promos) W.promos = clone(DEFAULT_PROMOS); W.promos.push({ badge: 'New', title: 'New offer', sub: '', cta: 'Learn more →', href: 'index.html', img: '', emoji: '⭐' }); saveDraft(); renderPromos(); });
+  $('promoDefault').addEventListener('click', () => { W.promos = null; saveDraft(); renderPromos(); });
+
+  /* ---------- questions ---------- */
+  PRACTICE_TOPICS.forEach(t => $('qSub').insertAdjacentHTML('beforeend', `<option>${esc(t.subject)}</option>`));
+  function fillCh() { const t = PRACTICE_TOPICS.find(x => x.subject === $('qSub').value); $('qCh').innerHTML = (t ? t.chapters : []).map(c => `<option>${esc(c)}</option>`).join(''); }
+  $('qSub').addEventListener('change', fillCh); fillCh();
+  $('qForm').addEventListener('submit', e => {
+    e.preventDefault();
+    const opts = [0, 1, 2, 3].map(i => $('qo' + i).value.trim());
+    if (!$('qText').value.trim() || opts.some(o => !o)) { showToast('Fill the question and all 4 options'); return; }
+    if (new Set(opts).size < 4) { showToast('Options must all be different'); return; }
+    W.questions.push({ id: 'c' + Date.now().toString(36), subject: $('qSub').value, chapter: $('qCh').value, diff: $('qDiff').value, imp: $('qImp').checked || undefined,
+      q: $('qText').value.trim(), opts, ans: +$('qAns').value, exp: $('qExp').value.trim() });
+    saveDraft(); $('qForm').reset(); fillCh(); renderQs(); renderTests(); showToast('Question added to draft');
+  });
+  function renderQs() {
+    $('qCount').textContent = W.questions.length;
+    $('qTable').innerHTML = '<tr><th>Question</th><th>Subject / chapter</th><th>Ans</th><th></th></tr>' + (W.questions.map((q, i) => `<tr><td>${esc(q.q)}</td><td>${esc(q.subject)} · ${esc(q.chapter)}</td><td>${'ABCD'[q.ans]}</td><td><button type="button" class="btn btn-outline" data-del="${i}">Delete</button></td></tr>`).join('') || '<tr><td colspan="4" class="muted">None yet.</td></tr>');
+  }
+  $('qTable').addEventListener('click', e => {
+    const b = e.target.closest('[data-del]'); if (!b) return; const q = W.questions[+b.dataset.del];
+    if (!confirm('Delete this question? Tests using it will drop it.')) return;
+    W.questions.splice(+b.dataset.del, 1); W.tests.forEach(t => t.ids = t.ids.filter(id => id !== q.id)); W.tests = W.tests.filter(t => t.ids.length);
+    saveDraft(); renderQs(); renderTests();
+  });
+
+  /* ---------- tests ---------- */
+  EXAMS.forEach(x => $('tExam').insertAdjacentHTML('beforeend', `<option>${esc(x.name)}</option>`));
+  const picked = new Set();
+  function allQ() { const mine = W.questions.map(q => Object.assign({}, q, { custom: true })); return QUESTIONS.filter(q => !q.custom).concat(mine); }
+  function renderPick() {
+    const f = $('tFilter').value.toLowerCase(), list = allQ().filter(q => !f || (q.q + q.subject + q.chapter).toLowerCase().includes(f)).slice(0, 200);
+    $('tPick').innerHTML = list.map(q => `<tr><td style="width:30px"><input type="checkbox" data-id="${esc(q.id)}" ${picked.has(q.id) ? 'checked' : ''} style="width:auto"></td><td>${esc(q.q)}<div class="small muted">${esc(q.subject)} · ${esc(q.chapter)}${q.custom ? ' · yours' : ''}</div></td></tr>`).join('');
+    $('tSel').textContent = picked.size;
+  }
+  $('tFilter').addEventListener('input', renderPick);
+  $('tPick').addEventListener('change', e => { const id = e.target.dataset.id; if (!id) return; e.target.checked ? picked.add(id) : picked.delete(id); $('tSel').textContent = picked.size; });
+  $('tForm').addEventListener('submit', e => {
+    e.preventDefault();
+    if (picked.size < 5) { showToast('Pick at least 5 questions'); return; }
+    const used = new Set([...TESTS.map(t => +t.id), ...W.tests.map(t => +t.id)]); let id = 100; while (used.has(id)) id++;
+    W.tests.push({ id, title: $('tTitle').value.trim(), exam: $('tExam').value, dur: +$('tDur').value || 30, diff: $('tDiff').value, access: $('tAcc').value, type: 'Full Mock', lang: 'English', ids: [...picked] });
+    picked.clear(); $('tForm').reset(); saveDraft(); renderTests(); showToast('Test added to draft');
+  });
+  function renderTests() {
+    renderPick();
+    $('tTable').innerHTML = '<tr><th>Title</th><th>Exam</th><th>Qs</th><th></th></tr>' + (W.tests.map((t, i) => `<tr><td>${esc(t.title)}</td><td>${esc(t.exam)}</td><td>${t.ids.length}</td><td><button type="button" class="btn btn-outline" data-del="${i}">Delete</button></td></tr>`).join('') || '<tr><td colspan="4" class="muted">None yet.</td></tr>');
+  }
+  $('tTable').addEventListener('click', e => { const b = e.target.closest('[data-del]'); if (!b || !confirm('Delete this test?')) return; W.tests.splice(+b.dataset.del, 1); saveDraft(); renderTests(); });
+
+  /* ---------- messages ---------- */
+  function renderMsgs() {
+    const m = store.get('exampro-messages', []) || [];
+    $('mTable').innerHTML = '<tr><th>Date</th><th>From</th><th>Topic</th><th>Message</th></tr>' + (m.map(x => `<tr><td>${esc(fmtDate(x.date))}</td><td>${esc(x.name)}<div class="small muted">${esc(x.email)}</div></td><td>${esc(x.topic || '')}</td><td>${esc(x.msg)}</td></tr>`).join('') || '<tr><td colspan="4" class="muted">No messages in this browser.</td></tr>');
+  }
+
+  /* ---------- settings ---------- */
+  function renderSettings() { $('sGa').value = W.settings.gaId || ''; $('sMail').value = W.settings.contactEmail || ''; }
+  ['sGa', 'sMail'].forEach(id => $(id).addEventListener('input', () => { W.settings.gaId = $('sGa').value.trim(); W.settings.contactEmail = $('sMail').value.trim(); saveDraft(); }));
+
+  /* ---------- publish ---------- */
+  $('pubDownload').addEventListener('click', () => {
+    const out = clone(W); delete out.__draft;
+    downloadFile('content.json', JSON.stringify(out, null, 2), 'application/json'); showToast('Replace content.json in your project and redeploy');
+  });
+  $('pubImport').addEventListener('click', () => $('pubFile').click());
+  $('pubFile').addEventListener('change', e => {
+    const f = e.target.files[0]; if (!f) return; const r = new FileReader();
+    r.onload = () => { try { W = norm(JSON.parse(r.result)); saveDraft(); renderAll(); showToast('Imported as draft'); } catch (err) { showToast('That file is not valid JSON'); } };
+    r.readAsText(f); e.target.value = '';
+  });
+  $('pubDiscard').addEventListener('click', () => { if (!confirm('Discard all draft changes and go back to the published content?')) return; store.del('exampro-content-draft'); location.reload(); });
+
+  gate();
+})();
+</script>
+</body>
+</html>

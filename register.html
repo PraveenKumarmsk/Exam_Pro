@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Create Account — ExamPro</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231e3a8a'/%3E%3Cpath d='M9 22V10h13v3h-9v2h8v3h-8v4z' fill='%23fff'/%3E%3Ccircle cx='24' cy='24' r='4' fill='%237c3aed'/%3E%3C/svg%3E" />
+<script>(function(){try{var t=localStorage.getItem('exampro-theme');if(!t&&window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches)t='dark';if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+<link rel="stylesheet" href="shared.css" />
+<link rel="manifest" href="manifest.json" />
+<meta name="theme-color" content="#1e3a8a" />
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+<meta name="mobile-web-app-capable" content="yes" /><meta name="apple-mobile-web-app-capable" content="yes" /><meta name="apple-mobile-web-app-title" content="ExamPro" />
+</head>
+<body data-page="register" data-search="Search exams…">
+
+<div id="site-header"></div>
+
+<div class="login-wrap">
+  <div class="login-side">
+    <h2>Start your preparation today</h2>
+    <p>Create a free account in under a minute and unlock your personal dashboard.</p>
+    <ul>
+      <li>Free full-length mock tests</li>
+      <li>Daily goal &amp; streak tracking</li>
+      <li>Weak-topic detection</li>
+      <li>Bookmarks and retry-wrong-answers</li>
+      <li>Study notes &amp; formula sheets</li>
+    </ul>
+  </div>
+
+  <div class="login-form">
+    <div class="dev-note">⚠️ <strong>Development mode:</strong> no server yet. Your name and settings are saved only in this browser, and the password is never stored or sent.</div>
+    <h2>Create your account</h2>
+    <p class="sub">Free to start. No credit card required.</p>
+
+    <form id="regForm" novalidate>
+      <div class="field"><label for="rName">Full name</label><input id="rName" type="text" autocomplete="name" maxlength="60" placeholder="Your name" /><div class="err">Please enter your name (at least 2 letters).</div></div>
+      <div class="field"><label for="rEmail">Email</label><input id="rEmail" type="email" autocomplete="email" placeholder="you@example.com" /><div class="err">Please enter a valid email address.</div></div>
+      <div class="form-grid">
+        <div class="field"><label for="rPass">Password</label><input id="rPass" type="password" autocomplete="new-password" placeholder="At least 8 characters" /><div class="strength"><i id="strBar"></i></div><div class="hint" id="strTxt">Use 8+ characters with letters and numbers.</div><div class="err">Password must be at least 8 characters.</div></div>
+        <div class="field"><label for="rPass2">Confirm password</label><input id="rPass2" type="password" autocomplete="new-password" placeholder="Repeat password" /><div class="err">Passwords do not match.</div></div>
+      </div>
+      <div class="form-grid">
+        <div class="field"><label for="rExam">Target exam (optional)</label><select id="rExam"><option value="">Select an exam…</option></select></div>
+        <div class="field"><label for="rGoal">Daily goal</label><select id="rGoal"><option value="10">10 questions / day</option><option value="20" selected>20 questions / day</option><option value="30">30 questions / day</option><option value="50">50 questions / day</option></select></div>
+      </div>
+      <label class="check"><input type="checkbox" id="rTerms" /> <span>I agree to the <a href="terms.html" style="color:var(--purple-600);font-weight:600" target="_blank">Terms of Service</a> and <a href="privacy.html" style="color:var(--purple-600);font-weight:600" target="_blank">Privacy Policy</a>.</span></label>
+      <div class="field" id="termsField"><div class="err">Please accept the terms to continue.</div></div>
+      <button type="submit" class="btn btn-primary btn-lg" style="width:100%">Create Account</button>
+    </form>
+    <p class="switch-link">Already have an account? <a href="login.html" style="color:var(--purple-600);font-weight:600">Sign in</a></p>
+  </div>
+</div>
+
+<div id="site-footer"></div>
+
+<script src="shared.js"></script>
+<script>
+(function () {
+  const $ = id => document.getElementById(id);
+  EXAMS.forEach(e => $('rExam').insertAdjacentHTML('beforeend', `<option>${escapeHtml(e.name)}</option>`));
+  const pre = new URLSearchParams(location.search).get('exam');
+  if (pre && EXAMS.some(e => e.name === pre)) $('rExam').value = pre;
+
+  function strength(p) {
+    let s = 0;
+    if (p.length >= 8) s++; if (p.length >= 12) s++; if (/[a-z]/.test(p) && /[A-Z]/.test(p)) s++; if (/\d/.test(p)) s++; if (/[^A-Za-z0-9]/.test(p)) s++;
+    return Math.min(4, s);
+  }
+  $('rPass').addEventListener('input', () => {
+    const s = strength($('rPass').value), pct = [0, 25, 50, 75, 100][s], col = ['var(--danger)', 'var(--danger)', 'var(--warning)', '#84cc16', 'var(--success)'][s];
+    $('strBar').style.width = pct + '%'; $('strBar').style.background = col;
+    $('strTxt').textContent = $('rPass').value ? ['Very weak', 'Weak', 'Fair', 'Good', 'Strong'][s] : 'Use 8+ characters with letters and numbers.';
+  });
+
+  const mark = (el, bad) => { el.closest('.field').classList.toggle('bad', bad); return !bad; };
+  $('regForm').addEventListener('submit', e => {
+    e.preventDefault();
+    const name = $('rName').value.trim(), email = $('rEmail').value.trim().toLowerCase(), p1 = $('rPass').value, p2 = $('rPass2').value;
+    let ok = true;
+    ok = mark($('rName'), name.length < 2) && ok;
+    ok = mark($('rEmail'), !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) && ok;
+    ok = mark($('rPass'), p1.length < 8) && ok;
+    ok = mark($('rPass2'), p1 !== p2) && ok;
+    const t = $('rTerms').checked; $('termsField').classList.toggle('bad', !t); ok = t && ok;
+    if (!ok) { const f = document.querySelector('.field.bad'); if (f) f.scrollIntoView({ block: 'center', behavior: 'smooth' }); return; }
+
+    const users = store.get('exampro-users', {}) || {};
+    if (users[email]) { showToast('An account with this email already exists on this device — please sign in.'); return; }
+    const exam = $('rExam').value, goal = +$('rGoal').value;
+    users[email] = { name, exam, goal }; store.set('exampro-users', users); track('register');
+    store.set('exampro-user', { name, email, exam, goal });
+    showToast('Account created — welcome, ' + name + '!');
+    const next = new URLSearchParams(location.search).get('next');
+    const safe = next && /^[a-z0-9\-]+\.html(\?[^\s]*)?$/i.test(next) ? next : 'dashboard.html';
+    setTimeout(() => { location.href = safe; }, 800);
+  });
+})();
+</script>
+</body>
+</html>

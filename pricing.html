@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Pricing — ExamPro</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231e3a8a'/%3E%3Cpath d='M9 22V10h13v3h-9v2h8v3h-8v4z' fill='%23fff'/%3E%3Ccircle cx='24' cy='24' r='4' fill='%237c3aed'/%3E%3C/svg%3E" />
+<script>(function(){try{var t=localStorage.getItem('exampro-theme');if(!t&&window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches)t='dark';if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+<link rel="stylesheet" href="shared.css" />
+<link rel="manifest" href="manifest.json" />
+<meta name="theme-color" content="#1e3a8a" />
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+<meta name="mobile-web-app-capable" content="yes" /><meta name="apple-mobile-web-app-capable" content="yes" /><meta name="apple-mobile-web-app-title" content="ExamPro" />
+</head>
+<body data-page="pricing" data-search="Search exams…">
+
+<div id="site-header"></div>
+
+<div class="page-head">
+  <div class="container">
+    <div class="breadcrumb"><a href="index.html">Home</a> / Pricing</div>
+    <h1>Simple, student-friendly pricing</h1>
+    <p>Start free and upgrade only when you need more. Prices below are placeholders for this development build.</p>
+  </div>
+</div>
+
+<section class="block">
+  <div class="container">
+    <div class="dev-note">⚠️ <strong>Demo pricing:</strong> no payment gateway is connected. Choosing a plan only saves your selection on this device — nobody is charged.</div>
+
+    <div class="row" style="justify-content:center;margin:6px 0 30px;gap:14px">
+      <span id="lblM" style="font-weight:700">Monthly</span>
+      <label class="switch" aria-label="Billing period"><input type="checkbox" id="billSw" /><span></span></label>
+      <span id="lblY" class="muted" style="font-weight:700">Yearly <span class="badge-pill badge-free">save up to 37%</span></span>
+    </div>
+
+    <div class="plan-grid" id="plans"></div>
+
+    <div class="sec-head" style="margin-top:56px"><h2>Pricing questions</h2></div>
+    <div style="max-width:760px;margin:0 auto">
+      <details class="acc"><summary>Do I need a card to start?</summary><div class="acc-body">No. The Free plan needs no payment details and never expires.</div></details>
+      <details class="acc"><summary>Can I cancel or change plans?</summary><div class="acc-body">Yes — you can switch plan any time from this page. See the <a href="refund.html" style="color:var(--purple-600)">refund policy</a> for details once paid plans launch.</div></details>
+      <details class="acc"><summary>What counts as "premium test series"?</summary><div class="acc-body">Additional full-length mock tests marked Premium in the test list. Free tests stay free.</div></details>
+      <details class="acc"><summary>Is there a discount for students?</summary><div class="acc-body">Student and scholarship pricing can be added here once billing is live. Use the <a href="contact.html" style="color:var(--purple-600)">contact page</a> to tell us what would help.</div></details>
+    </div>
+  </div>
+</section>
+
+<div id="site-footer"></div>
+
+<script src="shared.js"></script>
+<script>
+(function () {
+  const box = document.getElementById('plans'), sw = document.getElementById('billSw');
+  let current = store.get('exampro-plan', 'free');
+
+  function money(n) { return n === 0 ? '₹0' : '₹' + n.toLocaleString('en-IN'); }
+  function render() {
+    const yearly = sw.checked;
+    document.getElementById('lblM').classList.toggle('muted', yearly); document.getElementById('lblY').classList.toggle('muted', !yearly);
+    box.innerHTML = PLANS.map(p => {
+      const price = yearly ? p.yearly : p.monthly, per = p.monthly === 0 ? 'forever' : (yearly ? '/ year' : '/ month');
+      const isCur = current === p.id;
+      return `<div class="plan${p.featured ? ' featured' : ''}">${p.featured ? '<span class="tag">Most popular</span>' : ''}
+        <h3>${p.name}</h3><div class="muted small">${p.blurb}</div>
+        <div class="price">${money(price)} <small>${per}</small></div>
+        ${yearly && p.monthly ? `<div class="small muted">That is about ${money(Math.round(p.yearly / 12))} / month</div>` : ''}
+        <ul>${p.feats.map(f => `<li class="${f[1] ? '' : 'no'}">${escapeHtml(f[0])}</li>`).join('')}</ul>
+        <button type="button" class="btn ${p.featured ? 'btn-primary' : 'btn-outline'} btn-lg" data-plan="${p.id}" ${isCur ? 'disabled' : ''}>${isCur ? 'Current plan' : (p.monthly === 0 ? 'Use Free' : 'Choose ' + p.name)}</button></div>`;
+    }).join('');
+  }
+  box.addEventListener('click', e => {
+    const b = e.target.closest('[data-plan]'); if (!b) return;
+    if (!getUser()) { location.href = 'register.html'; return; }
+    current = b.dataset.plan; store.set('exampro-plan', current);
+    showToast('Plan set to ' + current.charAt(0).toUpperCase() + current.slice(1) + ' (demo — no payment taken)'); render();
+  });
+  sw.addEventListener('change', render);
+  render();
+})();
+</script>
+</body>
+</html>

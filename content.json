@@ -1,0 +1,7 @@
+{
+  "announcement": {"on": false, "id": "a1", "text": "", "link": ""},
+  "promos": null,
+  "questions": [],
+  "tests": [],
+  "settings": {"gaId": "", "contactEmail": ""}
+}

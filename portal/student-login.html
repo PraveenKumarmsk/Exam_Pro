@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex">
+<title>Student Login — ExamPro</title><link rel="stylesheet" href="/portal/portal.css"></head>
+<body class="student">
+<main class="login-wrap"><div class="login-card">
+  <a class="logo" href="/index.html"><b>EP</b> ExamPro</a>
+  <h1>Student login</h1><p class="muted small">Sign in with your Student ID or email. Your dashboard opens in a new tab.</p>
+  <div class="note hide" id="down">The ExamPro server is not running, so student login is unavailable. Start it with <code>npm start</code> and open this page from <code>http://localhost:3000</code>.</div>
+  <form id="f" novalidate>
+    <div class="field"><label for="id">Student ID or email</label><input id="id" autocomplete="username" required autofocus></div>
+    <div class="field"><label for="pw">Password</label><input id="pw" type="password" autocomplete="current-password" required></div>
+    <button class="btn" id="go" style="width:100%;margin-top:16px">Sign in</button>
+    <div class="err" id="err" role="alert"></div>
+  </form>
+  <div class="hide" id="opened" style="margin-top:14px"><p class="small">Signed in. Your dashboard should have opened in a new tab.</p>
+    <div class="row" style="margin-top:8px"><a class="btn ghost sm" href="/student/dashboard" target="_blank" rel="noopener">Open dashboard again</a><a class="btn sm" href="/student/dashboard" id="here">Continue in this tab</a></div></div>
+  <p class="small muted" style="margin-top:18px"><a href="/index.html">← Back to website</a></p>
+</div></main>
+<script src="/portal/portal.js"></script>
+<script>
+(async function () {
+  const { $, api } = Portal; if (!(await Portal.serverUp())) $('#down').classList.remove('hide');
+  $('#f').addEventListener('submit', async e => {
+    e.preventDefault(); const err = $('#err'); err.textContent = '';
+    const id = $('#id').value.trim(), pw = $('#pw').value; if (!id || !pw) { err.textContent = 'Enter your ID/email and password.'; return; }
+    const win = window.open('', '_blank'); /* opened synchronously so popup blockers allow it */
+    $('#go').disabled = true;
+    try {
+      await api('POST', '/api/student/login', { identifier: id, password: pw });
+      $('#pw').value = ''; $('#f').classList.add('hide'); $('#opened').classList.remove('hide');
+      if (win) { try { win.opener = null; } catch (x) {} win.location.href = '/student/dashboard'; } else $('#opened p').textContent = 'Signed in. Your browser blocked the new tab — use the button below.';
+    } catch (ex) { if (win) win.close(); err.textContent = ex.message; $('#go').disabled = false; }
+  });
+})();
+</script></body></html>

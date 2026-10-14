@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Page not found — ExamPro</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231e3a8a'/%3E%3Cpath d='M9 22V10h13v3h-9v2h8v3h-8v4z' fill='%23fff'/%3E%3Ccircle cx='24' cy='24' r='4' fill='%237c3aed'/%3E%3C/svg%3E" />
+<script>(function(){try{var t=localStorage.getItem('exampro-theme');if(!t&&window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches)t='dark';if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+<link rel="stylesheet" href="shared.css" />
+<link rel="manifest" href="manifest.json" />
+<meta name="theme-color" content="#1e3a8a" />
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+<meta name="mobile-web-app-capable" content="yes" /><meta name="apple-mobile-web-app-capable" content="yes" /><meta name="apple-mobile-web-app-title" content="ExamPro" />
+</head>
+<body data-page="404" data-search="Search exams…">
+
+<div id="site-header"></div>
+
+<section class="block">
+  <div class="container">
+    <div class="nf">
+      <div class="big grad-text">404</div>
+      <h1 style="font-size:1.6rem;margin:10px 0 8px">This page took a day off</h1>
+      <p class="muted" style="max-width:480px;margin:0 auto 22px">The page you are looking for does not exist or has moved. Try searching for an exam, or jump to one of these:</p>
+      <form id="nfForm" class="hero-search" style="max-width:460px;margin:0 auto 24px;display:flex;gap:10px">
+        <input type="search" id="nfQ" placeholder="Search exams like SSC CGL…" aria-label="Search exams" style="flex:1;padding:13px 16px;border-radius:12px;border:1px solid var(--border);background:var(--bg-card);color:var(--text);outline:none;min-width:0" />
+        <button type="submit" class="btn btn-primary">Search</button>
+      </form>
+      <div class="row" style="justify-content:center">
+        <a class="btn btn-primary" href="index.html">Home</a>
+        <a class="btn btn-outline" href="exams.html">All Exams</a>
+        <a class="btn btn-outline" href="tests.html">Mock Tests</a>
+        <a class="btn btn-outline" href="practice.html">Practice</a>
+        <a class="btn btn-outline" href="materials.html">Study Material</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div id="site-footer"></div>
+
+<script src="shared.js"></script>
+<script>
+  document.getElementById('nfForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var q = document.getElementById('nfQ').value.trim();
+    location.href = 'exams.html' + (q ? '?q=' + encodeURIComponent(q) : '');
+  });
+</script>
+</body>
+</html>

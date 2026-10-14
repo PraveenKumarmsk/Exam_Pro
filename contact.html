@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Contact — ExamPro</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231e3a8a'/%3E%3Cpath d='M9 22V10h13v3h-9v2h8v3h-8v4z' fill='%23fff'/%3E%3Ccircle cx='24' cy='24' r='4' fill='%237c3aed'/%3E%3C/svg%3E" />
+<script>(function(){try{var t=localStorage.getItem('exampro-theme');if(!t&&window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches)t='dark';if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+<link rel="stylesheet" href="shared.css" />
+<link rel="manifest" href="manifest.json" />
+<meta name="theme-color" content="#1e3a8a" />
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+<meta name="mobile-web-app-capable" content="yes" /><meta name="apple-mobile-web-app-capable" content="yes" /><meta name="apple-mobile-web-app-title" content="ExamPro" />
+</head>
+<body data-page="contact" data-search="Search exams…">
+
+<div id="site-header"></div>
+
+<div class="page-head">
+  <div class="container">
+    <div class="breadcrumb"><a href="index.html">Home</a> / Contact</div>
+    <h1>Contact &amp; Support</h1>
+    <p>Questions, corrections, ideas — we read everything.</p>
+  </div>
+</div>
+
+<section class="block">
+  <div class="container">
+    <div class="dash-grid">
+      <div>
+        <div class="widget">
+          <h3>Send us a message</h3><div class="sub" id="modeNote"></div>
+          <form id="cForm" novalidate>
+            <div class="form-grid">
+              <div class="field"><label for="cName">Your name</label><input id="cName" maxlength="60" autocomplete="name" /><div class="err">Please enter your name.</div></div>
+              <div class="field"><label for="cEmail">Email</label><input id="cEmail" type="email" autocomplete="email" /><div class="err">Enter a valid email so we can reply.</div></div>
+            </div>
+            <div class="field"><label for="cTopic">Topic</label><select id="cTopic"><option>General question</option><option>Report a wrong question / answer</option><option>Bug or technical problem</option><option>Feature request</option><option>Contribute content</option></select></div>
+            <div class="field"><label for="cMsg">Message</label><textarea id="cMsg" maxlength="1500" placeholder="Tell us how we can help…"></textarea><div class="hint"><span id="cnt">0</span> / 1500</div><div class="err">Please write a message (at least 10 characters).</div></div>
+            <button type="submit" class="btn btn-primary btn-lg">Send message</button>
+          </form>
+          <div id="sent" class="hide"><div class="empty" style="padding:30px 10px"><h3>Thank you!</h3><p id="sentTxt"></p><div class="btn-row"><button type="button" class="btn btn-outline" id="again">Send another</button></div></div></div>
+        </div>
+      </div>
+      <div>
+        <div class="widget" id="faq"><h3>Quick answers</h3><div class="sub">Support</div>
+          <details class="acc"><summary>My test timer or progress looks wrong</summary><div class="acc-body">Refresh the page — answers and remaining time are saved on your device and restored.</div></details>
+          <details class="acc"><summary>I lost my history</summary><div class="acc-body">History lives in your browser. Clearing site data or switching browser removes it. Export a backup from your <a href="profile.html" style="color:var(--purple-600)">profile</a>.</div></details>
+          <details class="acc"><summary>I found a wrong answer</summary><div class="acc-body">Please report it using the form with the question text — we will fix it.</div></details>
+          <details class="acc"><summary>Are the questions official?</summary><div class="acc-body">No. They are demo questions for practice and are labelled as such.</div></details>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div id="site-footer"></div>
+
+<script src="shared.js"></script>
+<script>
+(function () {
+  const $ = id => document.getElementById(id);
+  const hasMail = !!CONTACT_EMAIL;
+  $('modeNote').textContent = hasMail ? 'Sending opens your email app with the message ready.' : 'No mail server is connected yet, so your message is saved on this device only.';
+  const u = getUser(); if (u) { $('cName').value = u.name || ''; $('cEmail').value = u.email || ''; }
+  $('cMsg').addEventListener('input', () => { $('cnt').textContent = $('cMsg').value.length; });
+  const bad = (el, b) => { el.closest('.field').classList.toggle('bad', b); return !b; };
+  if (SERVER_MODE) $('modeNote').textContent = 'Your message goes straight to the institute\'s inbox.';
+  $('cForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const name = $('cName').value.trim(), email = $('cEmail').value.trim(), msg = $('cMsg').value.trim();
+    let ok = bad($('cName'), !name);
+    ok = bad($('cEmail'), !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) && ok;
+    ok = bad($('cMsg'), msg.length < 10) && ok;
+    if (!ok) return;
+    const rec = { name, email, topic: $('cTopic').value, msg, date: new Date().toISOString() };
+    const all = store.get('exampro-messages', []) || []; all.unshift(rec); store.set('exampro-messages', all.slice(0, 50)); track('contact_message');
+    $('cForm').classList.add('hide'); $('sent').classList.remove('hide');
+    if (SERVER_MODE) {
+      try {
+        const r = await serverPost('/api/contact', { name, email, topic: rec.topic, msg });
+        if (r.ok) { $('sentTxt').textContent = 'Thanks! Your message has been sent. We will reply by email.'; return; }
+        const j = await r.json().catch(() => ({})); $('sentTxt').textContent = (j.error || 'Could not send right now.') + ' Your message is saved on this device.'; return;
+      } catch (x) { $('sentTxt').textContent = 'The server could not be reached. Your message is saved on this device.'; return; }
+    }
+    if (hasMail) {
+      $('sentTxt').textContent = 'Your email app should open with the message ready to send.';
+      location.href = 'mailto:' + CONTACT_EMAIL + '?subject=' + encodeURIComponent('[ExamPro] ' + rec.topic) + '&body=' + encodeURIComponent(msg + '\n\n— ' + name + ' (' + email + ')');
+    } else {
+      $('sentTxt').textContent = 'Your message has been saved on this device. (Set CONTACT_EMAIL in shared.js to have it open your mail app.)';
+    }
+  });
+  $('again').addEventListener('click', () => { $('cForm').reset(); $('cnt').textContent = '0'; $('sent').classList.add('hide'); $('cForm').classList.remove('hide'); });
+})();
+</script>
+</body>
+</html>

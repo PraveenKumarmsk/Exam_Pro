@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Current Affairs — ExamPro</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231e3a8a'/%3E%3Cpath d='M9 22V10h13v3h-9v2h8v3h-8v4z' fill='%23fff'/%3E%3Ccircle cx='24' cy='24' r='4' fill='%237c3aed'/%3E%3C/svg%3E" />
+<script>(function(){try{var t=localStorage.getItem('exampro-theme');if(!t&&window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches)t='dark';if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+<link rel="stylesheet" href="shared.css" />
+<link rel="manifest" href="manifest.json" />
+<meta name="theme-color" content="#1e3a8a" />
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+<meta name="mobile-web-app-capable" content="yes" /><meta name="apple-mobile-web-app-capable" content="yes" /><meta name="apple-mobile-web-app-title" content="ExamPro" />
+</head>
+<body data-page="ca" data-search="Search current affairs…">
+
+<div id="site-header"></div>
+
+<div class="page-head">
+  <div class="container">
+    <div class="breadcrumb"><a href="index.html">Home</a> / Current Affairs</div>
+    <h1>Current Affairs &amp; Important Days</h1>
+    <p>An always-correct calendar of important days, plus your own current-affairs notebook — jot down the daily news you read, tag it, search it and revise it before the exam.</p>
+  </div>
+</div>
+
+<section class="block">
+  <div class="container">
+    <div class="dash-grid">
+      <div>
+        <div class="widget" id="notebook">
+          <div class="row between"><div><h3>My Current Affairs notebook</h3><div class="sub">Add items from the newspaper or an official source. Saved on this device only.</div></div>
+            <button type="button" class="btn btn-primary" id="toggleForm">+ Add item</button></div>
+          <form id="caForm" class="hide" novalidate style="margin:6px 0 18px">
+            <div class="form-grid">
+              <div class="field"><label for="caTitle">Headline</label><input id="caTitle" maxlength="140" placeholder="e.g. Key announcement or event" /><div class="err">Please enter a headline.</div></div>
+              <div class="field"><label for="caDate">Date</label><input id="caDate" type="date" /></div>
+              <div class="field"><label for="caCat">Category</label><select id="caCat"><option>National</option><option>International</option><option>Economy</option><option>Sports</option><option>Science &amp; Tech</option><option>Awards</option><option>Bihar</option><option>Other</option></select></div>
+              <div class="field"><label for="caSrc">Source (optional)</label><input id="caSrc" maxlength="100" placeholder="e.g. PIB, The Hindu" /></div>
+            </div>
+            <div class="field"><label for="caBody">Key points</label><textarea id="caBody" maxlength="800" placeholder="Who / what / where / why it matters for exams"></textarea></div>
+            <div class="row"><button type="submit" class="btn btn-primary">Save item</button><button type="button" class="btn btn-outline" id="cancelForm">Cancel</button></div>
+          </form>
+          <div class="filters" style="margin:0 0 14px;padding:12px">
+            <input type="search" id="caSearch" placeholder="Search your notes…" aria-label="Search notes" />
+            <select id="caFilter" aria-label="Category"><option value="all">All categories</option></select>
+            <div class="spacer"></div>
+            <button type="button" class="btn btn-outline" id="caExport">Export CSV</button>
+          </div>
+          <div id="caList"></div>
+        </div>
+      </div>
+
+      <div>
+        <div class="widget"><h3>Coming up</h3><div class="sub">Important days in the next 30 days</div><div id="upcoming"></div></div>
+        <div class="widget"><h3>Practise General Awareness</h3><div class="sub">Test yourself right now</div>
+          <div class="list-row"><div class="grow"><div class="t">GA practice set</div><div class="s">History, Geography, Polity, Economics</div></div><a class="btn btn-primary" style="padding:6px 12px;font-size:.78rem" href="test-attempt.html?mode=practice&subject=General%20Awareness">Start</a></div>
+          <div class="list-row"><div class="grow"><div class="t">Notes: Polity, History, Geography</div><div class="s">Quick static GK facts</div></div><a class="btn btn-outline" style="padding:6px 12px;font-size:.78rem" href="materials.html?subject=General%20Awareness">Read</a></div>
+        </div>
+        <div class="widget"><h3>Why no live news feed?</h3><p class="small muted">A trustworthy daily feed needs a server and licensed sources, which this build does not have. Rather than show invented headlines, this page gives you the verified important-days calendar and a notebook of your own.</p></div>
+      </div>
+    </div>
+
+    <div class="widget" style="margin-top:6px">
+      <div class="row between"><div><h3>Important days — full year</h3><div class="sub">Fixed calendar dates frequently asked in exams</div></div>
+        <select id="monthSel" aria-label="Month" style="padding:8px 12px;border-radius:10px;border:1px solid var(--border);background:var(--bg-soft);color:var(--text)"></select></div>
+      <div id="days"></div>
+    </div>
+  </div>
+</section>
+
+<div id="site-footer"></div>
+
+<script src="shared.js"></script>
+<script>
+(function () {
+  const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const now = new Date();
+
+  /* ---------- important days ---------- */
+  function dayRow(d, today) {
+    return `<div class="day-row${today ? ' today' : ''}"><div class="day-date"><b>${d[1]}</b><span>${MONTHS[d[0] - 1].slice(0, 3)}</span></div><div>${escapeHtml(d[2])}${today ? ' <span class="badge-pill badge-info">Today</span>' : ''}</div></div>`;
+  }
+  const upcoming = IMPORTANT_DAYS.map(d => {
+    let dt = new Date(now.getFullYear(), d[0] - 1, d[1]);
+    if (dt < new Date(now.getFullYear(), now.getMonth(), now.getDate())) dt = new Date(now.getFullYear() + 1, d[0] - 1, d[1]);
+    return { d, dt, diff: Math.round((dt - new Date(now.getFullYear(), now.getMonth(), now.getDate())) / 864e5) };
+  }).filter(x => x.diff <= 30).sort((a, b) => a.diff - b.diff);
+  document.getElementById('upcoming').innerHTML = upcoming.length
+    ? upcoming.map(x => dayRow(x.d, x.diff === 0) ).join('')
+    : '<p class="muted small">No fixed important days in the next 30 days.</p>';
+
+  const monthSel = document.getElementById('monthSel');
+  MONTHS.forEach((m, i) => monthSel.insertAdjacentHTML('beforeend', `<option value="${i + 1}">${m}</option>`));
+  monthSel.value = String(now.getMonth() + 1);
+  function renderDays() {
+    const m = +monthSel.value;
+    const rows = IMPORTANT_DAYS.filter(d => d[0] === m);
+    document.getElementById('days').innerHTML = rows.length ? rows.map(d => dayRow(d, d[0] === now.getMonth() + 1 && d[1] === now.getDate())).join('') : '<p class="muted small" style="padding:10px 0">No major fixed days listed for this month.</p>';
+  }
+  monthSel.addEventListener('change', renderDays); renderDays();
+
+  /* ---------- notebook ---------- */
+  const KEY = 'exampro-ca-items';
+  const items = () => { const a = store.get(KEY, []); return Array.isArray(a) ? a : []; };
+  const form = document.getElementById('caForm'), listEl = document.getElementById('caList');
+  const caSearch = document.getElementById('caSearch'), caFilter = document.getElementById('caFilter');
+  document.getElementById('caDate').value = dayKey(now);
+
+  function cats() { return [...new Set(items().map(i => i.cat))]; }
+  function fillCats() { const cur = caFilter.value; caFilter.innerHTML = '<option value="all">All categories</option>' + cats().map(c => `<option>${escapeHtml(c)}</option>`).join(''); if ([...caFilter.options].some(o => o.value === cur)) caFilter.value = cur; }
+
+  function render() {
+    fillCats();
+    const q = caSearch.value.trim().toLowerCase(), f = caFilter.value;
+    const list = items().filter(i => (f === 'all' || i.cat === f) && (!q || (i.title + ' ' + i.body + ' ' + i.src).toLowerCase().includes(q)))
+      .sort((a, b) => (b.date || '').localeCompare(a.date || '') || b.created - a.created);
+    if (!list.length) {
+      listEl.innerHTML = items().length ? '<div class="empty"><p>No items match your search.</p></div>' :
+        `<div class="empty"><h3>Your notebook is empty</h3><p>Add the day's important news so you can search and revise it later.</p></div>`;
+      return;
+    }
+    listEl.innerHTML = list.map(i => `<div class="ca-item"><div class="row between"><div class="row" style="gap:8px"><span class="badge-pill badge-info">${escapeHtml(i.cat)}</span><span class="small muted">${escapeHtml(i.date ? new Date(i.date + 'T00:00:00').toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '')}${i.src ? ' · ' + escapeHtml(i.src) : ''}</span></div>
+      <button type="button" class="chip-btn" data-del="${i.created}" aria-label="Delete item">Delete</button></div>
+      <h3>${escapeHtml(i.title)}</h3>${i.body ? `<p>${escapeHtml(i.body).replace(/\n/g, '<br>')}</p>` : ''}</div>`).join('');
+  }
+
+  const showForm = on => { form.classList.toggle('hide', !on); if (on) document.getElementById('caTitle').focus(); };
+  document.getElementById('toggleForm').addEventListener('click', () => showForm(form.classList.contains('hide')));
+  document.getElementById('cancelForm').addEventListener('click', () => showForm(false));
+  form.addEventListener('submit', e => {
+    e.preventDefault();
+    const title = document.getElementById('caTitle').value.trim();
+    const f = document.getElementById('caTitle').closest('.field'); f.classList.toggle('bad', !title);
+    if (!title) return;
+    const arr = items();
+    arr.unshift({ title, date: document.getElementById('caDate').value, cat: document.getElementById('caCat').value, src: document.getElementById('caSrc').value.trim(), body: document.getElementById('caBody').value.trim(), created: Date.now() });
+    store.set(KEY, arr.slice(0, 500)); form.reset(); document.getElementById('caDate').value = dayKey(new Date());
+    showForm(false); showToast('Saved to your notebook'); render();
+  });
+  listEl.addEventListener('click', e => {
+    const b = e.target.closest('[data-del]'); if (!b) return;
+    if (confirm('Delete this item?')) { store.set(KEY, items().filter(i => String(i.created) !== b.dataset.del)); render(); }
+  });
+  document.getElementById('caExport').addEventListener('click', () => {
+    if (!items().length) { showToast('Nothing to export yet'); return; }
+    const esc = v => '"' + String(v || '').replace(/"/g, '""') + '"';
+    downloadFile('current-affairs.csv', '﻿' + [['Date', 'Category', 'Headline', 'Source', 'Key points']].concat(items().map(i => [i.date, i.cat, i.title, i.src, i.body])).map(r => r.map(esc).join(',')).join('\n'), 'text/csv;charset=utf-8');
+  });
+  [caSearch, caFilter].forEach(el => el.addEventListener('input', render));
+  window.onNavSearch = v => { caSearch.value = v; render(); document.getElementById('notebook').scrollIntoView({ behavior: 'smooth' }); };
+  render();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex,nofollow">
+<title>Admin — ExamPro</title><link rel="stylesheet" href="/portal/portal.css"></head>
+<body class="admin">
+<div class="a-top"><button type="button" id="burger" aria-label="Open menu" aria-expanded="false">☰</button><b>ExamPro Admin</b></div>
+<div class="a-shell">
+  <aside class="a-side" id="side" aria-label="Admin navigation">
+    <a class="logo" href="/admin/dashboard"><b>EP</b> Admin</a>
+    <a href="/admin/dashboard" data-v="dashboard">📊 Dashboard</a><a href="/admin/students" data-v="students">🎓 Students</a><a href="/admin/courses" data-v="courses">📚 Courses &amp; batches</a>
+    <a href="/admin/exams" data-v="exams">📝 Exams</a><a href="/admin/notifications" data-v="notifications">🔔 Notifications <span class="badge bad hide" id="mbadge"></span></a>
+    <a href="/admin/analytics" data-v="analytics">📈 Analytics</a><a href="/admin/audit" data-v="audit">🧾 Audit log</a><a href="/admin/settings" data-v="settings">⚙️ Settings</a>
+    <div class="sp"></div><a href="/admin.html" target="_blank" rel="noopener">🖼️ Site content editor</a><a href="/index.html" target="_blank" rel="noopener">🌐 View website</a>
+    <div class="small" style="padding:8px 12px;color:#94a3b8" id="who"></div><button class="btn ghost sm" id="logout" type="button" style="margin:4px 8px">Log out</button>
+  </aside>
+  <main class="a-main" id="view" aria-live="polite"></main>
+</div>
+<script src="/portal/portal.js"></script>
+<script src="/portal/admin.js"></script>
+</body></html>

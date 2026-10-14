@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>About — ExamPro</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231e3a8a'/%3E%3Cpath d='M9 22V10h13v3h-9v2h8v3h-8v4z' fill='%23fff'/%3E%3Ccircle cx='24' cy='24' r='4' fill='%237c3aed'/%3E%3C/svg%3E" />
+<script>(function(){try{var t=localStorage.getItem('exampro-theme');if(!t&&window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches)t='dark';if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+<link rel="stylesheet" href="shared.css" />
+<link rel="manifest" href="manifest.json" />
+<meta name="theme-color" content="#1e3a8a" />
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+<meta name="mobile-web-app-capable" content="yes" /><meta name="apple-mobile-web-app-capable" content="yes" /><meta name="apple-mobile-web-app-title" content="ExamPro" />
+</head>
+<body data-page="about" data-search="Search exams…">
+
+<div id="site-header"></div>
+
+<div class="page-head">
+  <div class="container">
+    <div class="breadcrumb"><a href="index.html">Home</a> / About</div>
+    <h1>About ExamPro</h1>
+    <p>A modern, honest practice platform for Indian competitive exams — SSC, Railway, Bihar exams, Banking and more.</p>
+  </div>
+</div>
+
+<section class="block" id="team" style="background:var(--bg-soft)">
+  <div class="container">
+    <div class="sec-head"><h2>The team behind ExamPro</h2><p>Built by aspirants who know what a good practice platform should feel like.</p></div>
+    <div class="team-grid" id="teamGrid"></div>
+  </div>
+</section>
+
+<section class="block">
+  <div class="container">
+    <div class="dash-grid">
+      <div>
+        <div class="widget"><h3>Our mission</h3><p class="muted" style="font-size:.95rem;margin-top:8px">ExamPro exists to give every aspirant — in a metro or a small town — the same quality of practice: realistic timed tests, honest analytics and clear explanations, without a heavy price tag.</p></div>
+        <div class="widget"><h3>What you can do here</h3>
+          <div class="feat-grid" style="grid-template-columns:1fr 1fr;margin-top:10px">
+            <a class="feat" href="tests.html"><div class="ico">🎯</div><h3>Mock tests</h3><p>Timed tests with palette, review marks and auto-submit.</p></a>
+            <a class="feat" href="practice.html"><div class="ico">📖</div><h3>Chapter practice</h3><p>Drill one topic at a time with instant solutions.</p></a>
+            <a class="feat" href="dashboard.html"><div class="ico">📊</div><h3>Analytics</h3><p>Trends, weak chapters, streaks and daily goals.</p></a>
+            <a class="feat" href="materials.html"><div class="ico">📝</div><h3>Study material</h3><p>Formula sheets and quick facts, searchable.</p></a>
+          </div></div>
+        <div class="widget" id="honesty"><h3>Our promise: no fake numbers</h3>
+          <ul style="padding-left:20px;margin-top:8px;color:var(--text-muted);font-size:.92rem"><li style="margin-bottom:6px">Percentiles and ranks appear only when there is real data behind them.</li><li style="margin-bottom:6px">Demo questions are labelled as demo — they are never passed off as official papers.</li><li>Statistics on the home page come from what is actually on the site.</li></ul></div>
+        <div class="widget" id="careers"><h3>Careers</h3><p class="muted" style="font-size:.92rem;margin-top:8px">There are no open positions listed right now. If you are a teacher, content writer or developer who would like to contribute, tell us on the <a href="contact.html" style="color:var(--purple-600);font-weight:600">contact page</a>.</p></div>
+      </div>
+      <div>
+        <div class="widget"><h3>At a glance</h3><div class="sub">Live from the site data</div>
+          <div class="list-row"><div class="grow">Exams listed</div><strong id="aExams">–</strong></div>
+          <div class="list-row"><div class="grow">Mock tests</div><strong id="aTests">–</strong></div>
+          <div class="list-row"><div class="grow">Practice questions</div><strong id="aQ">–</strong></div>
+          <div class="list-row"><div class="grow">Study notes</div><strong id="aN">–</strong></div></div>
+        <div class="widget"><h3>Get in touch</h3><p class="small muted" style="margin-bottom:10px">Found a wrong answer? Have an idea?</p><a class="btn btn-primary" href="contact.html">Contact us</a></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div id="site-footer"></div>
+
+<script src="shared.js"></script>
+<script>
+  renderTeam(document.getElementById('teamGrid'));
+  document.getElementById('aExams').textContent = EXAMS.length;
+  document.getElementById('aTests').textContent = TESTS.length;
+  document.getElementById('aQ').textContent = QUESTIONS.length;
+  document.getElementById('aN').textContent = NOTES.length;
+</script>
+</body>
+</html>

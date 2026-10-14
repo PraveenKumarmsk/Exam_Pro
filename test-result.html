@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Test Result — ExamPro</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231e3a8a'/%3E%3Cpath d='M9 22V10h13v3h-9v2h8v3h-8v4z' fill='%23fff'/%3E%3Ccircle cx='24' cy='24' r='4' fill='%237c3aed'/%3E%3C/svg%3E" />
+<script>(function(){try{var t=localStorage.getItem('exampro-theme');if(!t&&window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches)t='dark';if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+<link rel="stylesheet" href="shared.css" />
+<link rel="manifest" href="manifest.json" />
+<meta name="theme-color" content="#1e3a8a" />
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+<meta name="mobile-web-app-capable" content="yes" /><meta name="apple-mobile-web-app-capable" content="yes" /><meta name="apple-mobile-web-app-title" content="ExamPro" />
+</head>
+<body data-page="results" data-search="Search tests…">
+
+<div id="site-header"></div>
+
+<main class="container runner-wrap">
+  <div id="app"><div class="empty"><h3>Loading result…</h3></div></div>
+</main>
+
+<div id="site-footer"></div>
+
+<script src="shared.js"></script>
+<script>
+(function () {
+  const P = new URLSearchParams(location.search);
+  const app = document.getElementById('app');
+  const QMAP = qById();
+  const LETTERS = ['A', 'B', 'C', 'D'];
+  let ATT = null, FILTER = 'all';
+
+  function fmtQ(s) { return escapeHtml(s).replace(/\n/g, '<br>'); }
+  function statusOf(id) {
+    const q = QMAP[id], sel = ATT.answers ? ATT.answers[id] : undefined;
+    return sel === undefined ? 'skip' : (sel === q.ans ? 'correct' : 'wrong');
+  }
+
+  function notFound() {
+    app.innerHTML = `<div class="empty panel" style="padding:56px 24px">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16.5v.01"/></svg>
+      <h3>Attempt not found</h3><p>This attempt is not saved on this device (it may have been cleared, or it was taken in another browser).</p>
+      <div class="btn-row"><a href="results.html" class="btn btn-primary">My Results</a><a href="tests.html" class="btn btn-outline">Mock Tests</a></div></div>`;
+  }
+
+  /* bar chart: seconds spent on each question */
+  function timeChart() {
+    const ids = ATT.qids, qt = ATT.qtime || {};
+    const vals = ids.map(id => Math.round((qt[id] || 0) * 10) / 10);
+    if (!Object.keys(qt).length) return '<p class="muted small">Per-question time was not recorded for this attempt.</p>';
+    const W = 640, H = 170, pl = 30, pb = 22, pt = 10, n = vals.length;
+    const max = Math.max(5, ...vals), bw = (W - pl - 8) / n;
+    let svg = `<svg class="chart-svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="Seconds spent per question">`;
+    [0, .5, 1].forEach(f => { const y = pt + (H - pt - pb) * (1 - f); svg += `<line class="grid" x1="${pl}" x2="${W - 4}" y1="${y}" y2="${y}"/><text x="${pl - 4}" y="${y + 3}" text-anchor="end">${Math.round(max * f)}s</text>`; });
+    vals.forEach((v, i) => {
+      const h = (H - pt - pb) * (v / max), x = pl + i * bw + bw * .15, y = H - pb - h;
+      const st = statusOf(ids[i]); const cls = st === 'correct' ? 'good' : st === 'wrong' ? 'bad' : '';
+      svg += `<rect class="bar ${cls}" x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${(bw * .7).toFixed(1)}" height="${Math.max(h, 1).toFixed(1)}" rx="2"><title>Q${i + 1}: ${v}s (${st === 'skip' ? 'skipped' : st})</title></rect>`;
+      if (n <= 30 || i % 5 === 0) svg += `<text x="${(x + bw * .35).toFixed(1)}" y="${H - 7}" text-anchor="middle">${i + 1}</text>`;
+    });
+    return svg + '</svg><p class="muted small" style="margin-top:6px"><span style="color:var(--success)">■</span> correct &nbsp; <span style="color:var(--danger)">■</span> wrong &nbsp; <span style="color:var(--navy-700)">■</span> skipped</p>';
+  }
+
+  function render() {
+    const a = ATT;
+    const attempted = a.correct + a.wrong, acc = attempted ? Math.round(a.correct / attempted * 100) : 0;
+    const pct = a.total ? Math.round(a.correct / a.total * 100) : 0;
+    const verdict = pct >= 80 ? 'Excellent work! 🎉' : pct >= 60 ? 'Good job — keep practising to push it even higher.' : pct >= 35 ? 'A fair start. Read the explanations below and try again.' : 'Don\'t worry — go through every explanation below and retake the test.';
+
+    /* compare with the previous attempt of the same test */
+    const all = getAttempts();
+    const prev = all.filter(x => x.id !== a.id && x.title === a.title && new Date(x.date) < new Date(a.date))[0];
+    let cmp = '';
+    if (prev) {
+      const d = a.score - prev.score;
+      cmp = `<div class="info-note" style="margin-top:14px"><span>Compared with your previous attempt of this test (${escapeHtml(fmtDate(prev.date))}): <strong style="color:${d > 0 ? 'var(--success)' : d < 0 ? 'var(--danger)' : 'inherit'}">${d > 0 ? '+' + d : d} marks</strong> (${prev.score} → ${a.score}).</span></div>`;
+    }
+
+    const m = QMAP, subj = {}, diff = { Easy: { t: 0, a: 0, ok: 0 }, Medium: { t: 0, a: 0, ok: 0 }, Hard: { t: 0, a: 0, ok: 0 } };
+    a.qids.forEach(id => {
+      const q = m[id]; if (!q) return;
+      const sel = a.answers ? a.answers[id] : undefined, secs = (a.qtime && a.qtime[id]) || 0;
+      const s = subj[q.subject] || (subj[q.subject] = { t: 0, a: 0, ok: 0, sec: 0 });
+      s.t++; s.sec += secs; const d = diff[q.diff] || (diff[q.diff] = { t: 0, a: 0, ok: 0 }); d.t++;
+      if (sel !== undefined) { s.a++; d.a++; if (sel === q.ans) { s.ok++; d.ok++; } }
+    });
+    const subjRows = Object.keys(subj).map(k => {
+      const s = subj[k], p = s.a ? Math.round(s.ok / s.a * 100) : 0;
+      return `<tr><td><strong>${escapeHtml(k)}</strong></td><td>${s.t}</td><td>${s.a}</td><td>${s.ok}</td><td>${s.sec ? fmtTime(s.sec) : '—'}</td>
+        <td style="min-width:140px"><div style="font-size:.78rem">${p}%</div><div class="rank-bar"><div class="rank-fill" style="width:${p}%"></div></div></td></tr>`;
+    }).join('');
+    const diffRows = Object.keys(diff).filter(k => diff[k].t).map(k => {
+      const d = diff[k], p = d.a ? Math.round(d.ok / d.a * 100) : 0;
+      return `<tr><td><span class="badge-pill ${diffClass(k)}">${k}</span></td><td>${d.t}</td><td>${d.a}</td><td>${d.ok}</td><td>${p}%</td></tr>`;
+    }).join('');
+
+    /* time insight */
+    const qt = a.qtime || {}, timed = a.qids.filter(id => qt[id] > 0);
+    let slow = '';
+    if (timed.length > 2) {
+      const top = timed.slice().sort((x, y) => qt[y] - qt[x]).slice(0, 3).map(id => `Q${a.qids.indexOf(id) + 1} (${Math.round(qt[id])}s)`).join(', ');
+      const avg = Math.round(timed.reduce((s, id) => s + qt[id], 0) / timed.length);
+      slow = `<p class="small muted" style="margin-top:10px">Average time per question: <strong>${avg}s</strong>. Slowest: ${top}.</p>`;
+    }
+
+    app.innerHTML = `
+      <div class="t-top">
+        <div><div class="t-title">${escapeHtml(a.title)}</div><div class="t-sub">${escapeHtml(fmtDate(a.date))}${a.user && a.user.name ? ' · ' + escapeHtml(a.user.name) : ''} · demo questions</div></div>
+        <div class="row no-print">
+          ${a.url ? `<a class="btn btn-primary" href="${escapeHtml(a.url)}">Retake</a>` : ''}
+          ${a.wrong ? `<a class="btn btn-outline" href="test-attempt.html?mode=incorrect">Practise wrong answers</a>` : ''}
+          <button type="button" class="btn btn-outline" id="shareBtn">Copy score</button>
+          <button type="button" class="btn btn-outline" id="csvBtn">Download CSV</button>
+          <button type="button" class="btn btn-outline" id="printBtn">Print</button>
+          <a class="btn btn-ghost" href="dashboard.html">Dashboard</a>
+        </div>
+      </div>
+      ${P.get('auto') ? '<div class="dev-note">Time ran out, so this test was submitted automatically.</div>' : ''}
+      <div class="stats-grid">
+        <div class="stat"><div class="num">${a.score} / ${a.max}</div><div class="lbl">Score (${pct}%)</div></div>
+        <div class="stat"><div class="num">${acc}%</div><div class="lbl">Accuracy</div><div class="note">of attempted questions</div></div>
+        <div class="stat"><div class="num">${fmtTime(a.timeSec)}</div><div class="lbl">Time taken</div><div class="note">of ${a.durMin} min</div></div>
+        <div class="stat"><div class="num" style="font-size:1.3rem;line-height:2.4rem"><span style="color:var(--success)">${a.correct}</span> · <span style="color:var(--danger)">${a.wrong}</span> · ${a.unattempted}</div><div class="lbl">Correct · Wrong · Skipped</div></div>
+      </div>
+      <p class="res-verdict">${verdict}</p>
+      ${cmp}
+
+      <div class="dash-grid" style="margin-top:26px">
+        <div>
+          <div class="widget"><h3>Time per question</h3><div class="sub">Where your minutes went</div>${timeChart()}${slow}</div>
+          <div class="widget"><h3>Subject-wise breakdown</h3><div class="sub">Accuracy is on attempted questions</div>
+            <div class="table-wrap"><table><thead><tr><th>Subject</th><th>Questions</th><th>Attempted</th><th>Correct</th><th>Time</th><th>Accuracy</th></tr></thead><tbody>${subjRows}</tbody></table></div></div>
+        </div>
+        <div>
+          <div class="widget"><h3>By difficulty</h3><div class="sub">How you handle easy vs hard</div>
+            <div class="table-wrap"><table><thead><tr><th>Level</th><th>Qs</th><th>Att.</th><th>OK</th><th>Acc.</th></tr></thead><tbody>${diffRows}</tbody></table></div></div>
+          <div class="widget"><h3>What next?</h3><div class="sub">Suggested from this attempt</div>
+            ${nextSteps(subj)}</div>
+        </div>
+      </div>
+
+      <div class="sec-head left" style="margin:10px 0 14px"><h2 style="font-size:1.2rem">Review answers</h2></div>
+      <div class="tabs" id="revTabs">
+        <button type="button" class="tab active" data-filter="all">All (${a.qids.length})</button>
+        <button type="button" class="tab" data-filter="correct">Correct (${a.correct})</button>
+        <button type="button" class="tab" data-filter="wrong">Wrong (${a.wrong})</button>
+        <button type="button" class="tab" data-filter="skip">Skipped (${a.unattempted})</button>
+      </div>
+      <div id="reviewList"></div>`;
+    drawReview();
+    document.getElementById('printBtn').addEventListener('click', () => window.print());
+    document.getElementById('csvBtn').addEventListener('click', exportCsv);
+    document.getElementById('shareBtn').addEventListener('click', copyScore);
+  }
+
+  function nextSteps(subj) {
+    const weak = Object.keys(subj).filter(k => subj[k].a && subj[k].ok / subj[k].a < 0.6).sort((x, y) => subj[x].ok / subj[x].a - subj[y].ok / subj[y].a);
+    const items = [];
+    weak.slice(0, 2).forEach(k => items.push(`<div class="list-row"><div class="grow"><div class="t">Strengthen ${escapeHtml(k)}</div><div class="s">${subj[k].ok}/${subj[k].a} correct here</div></div><a class="btn btn-outline" style="padding:6px 12px;font-size:.78rem" href="test-attempt.html?mode=practice&subject=${encodeURIComponent(k)}">Practise</a></div>`));
+    items.push(`<div class="list-row"><div class="grow"><div class="t">Read the notes</div><div class="s">Formulas and quick facts</div></div><a class="btn btn-outline" style="padding:6px 12px;font-size:.78rem" href="materials.html">Open</a></div>`);
+    items.push(`<div class="list-row"><div class="grow"><div class="t">Today's daily practice</div><div class="s">10 mixed questions</div></div><a class="btn btn-outline" style="padding:6px 12px;font-size:.78rem" href="test-attempt.html?mode=daily">Start</a></div>`);
+    return items.join('');
+  }
+
+  function drawReview() {
+    document.querySelectorAll('#revTabs .tab').forEach(t => t.classList.toggle('active', t.dataset.filter === FILTER));
+    const bms = new Set(getBookmarks());
+    const items = ATT.qids.map((id, i) => ({ id, i })).filter(x => QMAP[x.id] && (FILTER === 'all' || statusOf(x.id) === FILTER));
+    const list = document.getElementById('reviewList');
+    if (!items.length) { list.innerHTML = '<div class="empty panel"><p>No questions in this view.</p></div>'; return; }
+    list.innerHTML = items.map(({ id, i }) => {
+      const q = QMAP[id], sel = ATT.answers ? ATT.answers[id] : undefined, st = statusOf(id), secs = Math.round((ATT.qtime && ATT.qtime[id]) || 0);
+      const badge = st === 'correct' ? '<span class="badge-pill badge-easy">Correct</span>' : st === 'wrong' ? '<span class="badge-pill badge-hard">Wrong</span>' : '<span class="badge-pill badge-premium">Not attempted</span>';
+      return `<div class="rev-item">
+        <div class="t-meta"><strong style="color:var(--text)">Q${i + 1}</strong>${badge}<span class="badge-pill badge-info">${escapeHtml(q.subject)} · ${escapeHtml(q.chapter)}</span>${secs ? `<span>⏱ ${secs}s</span>` : ''}
+          <span style="margin-left:auto"><button type="button" class="q-bookmark${bms.has(id) ? ' on' : ''}" data-bm="${id}" title="Save for later practice" aria-label="Bookmark">${bms.has(id) ? '★' : '☆'}</button></span></div>
+        ${q.passage ? `<div class="t-passage">${escapeHtml(q.passage)}</div>` : ''}
+        <div class="t-q">${fmtQ(q.q)}</div>
+        ${q.opts.map((o, k) => {
+          const cls = k === q.ans ? 'ok' : (k === sel ? 'bad' : '');
+          const tag = k === q.ans ? ' ✓ Correct answer' : (k === sel ? ' ✗ Your answer' : '');
+          return `<div class="t-opt ${cls}"><span class="let">${LETTERS[k]}</span><span>${escapeHtml(o)}<small style="opacity:.8;font-weight:600">${tag}</small></span></div>`;
+        }).join('')}
+        <div class="rev-exp"><strong>Explanation:</strong> ${escapeHtml(q.exp)}</div>
+      </div>`;
+    }).join('');
+  }
+
+  function exportCsv() {
+    const esc = v => '"' + String(v).replace(/"/g, '""') + '"';
+    const rows = [['No', 'Subject', 'Chapter', 'Difficulty', 'Question', 'Your answer', 'Correct answer', 'Result', 'Seconds']];
+    ATT.qids.forEach((id, i) => {
+      const q = QMAP[id]; if (!q) return;
+      const sel = ATT.answers ? ATT.answers[id] : undefined;
+      rows.push([i + 1, q.subject, q.chapter, q.diff, q.q.replace(/\n/g, ' '), sel === undefined ? '' : q.opts[sel], q.opts[q.ans], statusOf(id), Math.round((ATT.qtime && ATT.qtime[id]) || 0)]);
+    });
+    downloadFile('exampro-result-' + ATT.id + '.csv', '﻿' + rows.map(r => r.map(esc).join(',')).join('\n'), 'text/csv;charset=utf-8');
+  }
+  function copyScore() {
+    const txt = `I scored ${ATT.score}/${ATT.max} (${Math.round(ATT.correct / ATT.total * 100)}%) on "${ATT.title}" on ExamPro.`;
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(() => showToast('Score copied'), () => showToast(txt));
+    else showToast(txt);
+  }
+
+  app.addEventListener('click', e => {
+    const f = e.target.closest('[data-filter]'); if (f) { FILTER = f.dataset.filter; drawReview(); return; }
+    const b = e.target.closest('[data-bm]'); if (b) { const on = toggleBookmark(b.dataset.bm); b.classList.toggle('on', on); b.textContent = on ? '★' : '☆'; showToast(on ? 'Saved to your bookmarks' : 'Removed from bookmarks'); }
+  });
+
+  const id = P.get('id');
+  ATT = id ? getAttempts().find(a => a.id === id) : getAttempts()[0];
+  if (!ATT) notFound(); else render();
+})();
+</script>
+</body>
+</html>

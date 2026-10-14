@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>All Exams — ExamPro</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231e3a8a'/%3E%3Cpath d='M9 22V10h13v3h-9v2h8v3h-8v4z' fill='%23fff'/%3E%3Ccircle cx='24' cy='24' r='4' fill='%237c3aed'/%3E%3C/svg%3E" />
+<script>(function(){try{var t=localStorage.getItem('exampro-theme');if(!t&&window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches)t='dark';if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+<link rel="stylesheet" href="shared.css" />
+<link rel="manifest" href="manifest.json" />
+<meta name="theme-color" content="#1e3a8a" />
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+<meta name="mobile-web-app-capable" content="yes" /><meta name="apple-mobile-web-app-capable" content="yes" /><meta name="apple-mobile-web-app-title" content="ExamPro" />
+</head>
+<body data-page="exams" data-search="Search exams…">
+
+<div id="site-header"></div>
+
+<div class="page-head">
+  <div class="container">
+    <div class="breadcrumb"><a href="index.html">Home</a> / All Exams</div>
+    <h1>All Examinations</h1>
+    <p>Browse every exam on ExamPro. Filter by category, search by name, and jump straight into a test.</p>
+  </div>
+</div>
+
+<section class="block">
+  <div class="container">
+    <div class="filters">
+      <input type="search" id="fSearch" placeholder="Search exams…" aria-label="Search exams" />
+      <select id="fCat" aria-label="Category">
+        <option value="all">All Categories</option>
+        <option value="ssc">SSC</option>
+        <option value="railway">Railway</option>
+        <option value="bihar">Bihar</option>
+        <option value="other">Other</option>
+      </select>
+      <select id="fTests" aria-label="Test availability">
+        <option value="all">All Exams</option>
+        <option value="has">Has Tests</option>
+        <option value="none">Coming Soon</option>
+      </select>
+      <div class="spacer"></div>
+      <button type="button" class="btn btn-outline" id="clearFilters">Clear All</button>
+    </div>
+
+    <p style="font-size:.85rem;color:var(--text-muted);margin-bottom:16px" id="resultCount">Loading…</p>
+    <div class="cards" id="grid"></div>
+  </div>
+</section>
+
+<div id="site-footer"></div>
+
+<script src="shared.js"></script>
+<script>
+(function () {
+  const params = new URLSearchParams(location.search);
+  const fSearch = document.getElementById('fSearch');
+  const fCat = document.getElementById('fCat');
+  const fTests = document.getElementById('fTests');
+  const grid = document.getElementById('grid');
+  const count = document.getElementById('resultCount');
+  const navSearch = document.getElementById('navSearch');
+
+  // prefill from query string (?q= or ?exam= or ?cat=)
+  const pre = params.get('q') || params.get('exam');
+  if (pre) { fSearch.value = pre; if (navSearch) navSearch.value = pre; }
+  if (params.get('cat') && [...fCat.options].some(o => o.value === params.get('cat'))) fCat.value = params.get('cat');
+
+  function render() {
+    const q = fSearch.value.trim().toLowerCase();
+    const cat = fCat.value;
+    const t = fTests.value;
+
+    const list = EXAMS.filter(e => {
+      const qOk = !q || e.name.toLowerCase().includes(q) || e.code.toLowerCase().includes(q) || e.desc.toLowerCase().includes(q);
+      const catOk = cat === 'all' || e.cat === cat;
+      const tOk = t === 'all' || (t === 'has' && e.tests > 0) || (t === 'none' && e.tests === 0);
+      return qOk && catOk && tOk;
+    });
+
+    count.textContent = `${list.length} exam${list.length === 1 ? '' : 's'} found`;
+
+    if (!list.length) {
+      grid.innerHTML = `<div class="empty" style="grid-column:1/-1">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <h3>No exams found</h3><p>Try clearing filters or searching something else.</p>
+      </div>`;
+      return;
+    }
+
+    grid.innerHTML = list.map(e => `
+      <a href="exam-detail.html?exam=${encodeURIComponent(e.name)}" class="card">
+        <div class="exam-icon">${escapeHtml(e.code)}</div>
+        <h3>${escapeHtml(e.name)}</h3>
+        <p>${escapeHtml(e.desc)}</p>
+        <div class="meta"><span style="color:var(--purple-600);font-weight:600">${e.tests} test${e.tests === 1 ? '' : 's'}</span><span>${e.tests > 0 ? '▶ Start' : 'Coming soon'}</span></div>
+      </a>`).join('');
+  }
+
+  [fSearch, fCat, fTests].forEach(el => el.addEventListener('input', render));
+  document.getElementById('clearFilters').addEventListener('click', () => {
+    fSearch.value = ''; fCat.value = 'all'; fTests.value = 'all';
+    if (navSearch) navSearch.value = '';
+    render();
+  });
+  window.onNavSearch = v => { fSearch.value = v; render(); };
+  render();
+})();
+</script>
+</body>
+</html>

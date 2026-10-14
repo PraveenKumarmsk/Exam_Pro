@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex,nofollow">
+<title>Admin Login — ExamPro</title><link rel="stylesheet" href="/portal/portal.css"></head>
+<body class="admin">
+<main class="login-wrap"><div class="login-card">
+  <a class="logo" href="/index.html"><b>EP</b> ExamPro Admin</a>
+  <h1>Administrator sign-in</h1><p class="muted small">Authorised staff only. All actions are logged.</p>
+  <div class="note hide" id="down">The ExamPro server is not running. Start it with <code>npm start</code>.</div>
+  <form id="f" novalidate>
+    <div class="field"><label for="em">Email</label><input id="em" type="email" autocomplete="username" required autofocus></div>
+    <div class="field"><label for="pw">Password</label><input id="pw" type="password" autocomplete="current-password" required></div>
+    <button class="btn" id="go" style="width:100%;margin-top:16px">Sign in</button>
+    <div class="err" id="err" role="alert"></div>
+  </form>
+  <p class="small muted" style="margin-top:18px"><a href="/index.html">← Back to website</a></p>
+</div></main>
+<script src="/portal/portal.js"></script>
+<script>
+(async function () {
+  const { $, api } = Portal; if (!(await Portal.serverUp())) $('#down').classList.remove('hide');
+  $('#f').addEventListener('submit', async e => {
+    e.preventDefault(); const err = $('#err'); err.textContent = ''; $('#go').disabled = true;
+    try { await api('POST', '/api/admin/login', { email: $('#em').value.trim(), password: $('#pw').value }); location.href = '/admin/dashboard'; }
+    catch (ex) { err.textContent = ex.message; $('#go').disabled = false; }
+  });
+})();
+</script></body></html>

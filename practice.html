@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Practice — ExamPro</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231e3a8a'/%3E%3Cpath d='M9 22V10h13v3h-9v2h8v3h-8v4z' fill='%23fff'/%3E%3Ccircle cx='24' cy='24' r='4' fill='%237c3aed'/%3E%3C/svg%3E" />
+<script>(function(){try{var t=localStorage.getItem('exampro-theme');if(!t&&window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches)t='dark';if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+<link rel="stylesheet" href="shared.css" />
+<link rel="manifest" href="manifest.json" />
+<meta name="theme-color" content="#1e3a8a" />
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+<meta name="mobile-web-app-capable" content="yes" /><meta name="apple-mobile-web-app-capable" content="yes" /><meta name="apple-mobile-web-app-title" content="ExamPro" />
+</head>
+<body data-page="practice" data-search="Search chapters…">
+
+<div id="site-header"></div>
+
+<div class="page-head">
+  <div class="container">
+    <div class="breadcrumb"><a href="index.html">Home</a> / Practice</div>
+    <h1>Chapter &amp; Topic Practice</h1>
+    <p>Pick a subject, drill into chapters, and practise topic-wise questions. Questions are added progressively — all content here is demo content and is labelled as such.</p>
+  </div>
+</div>
+
+<section class="block" id="mastery" style="padding-bottom:0">
+  <div class="container">
+    <div class="sec-head left" style="margin-bottom:14px"><h2>Master one chapter at a time</h2></div>
+    <div id="masteryBox"></div>
+  </div>
+</section>
+
+<section class="block">
+  <div class="container">
+    <div class="filters" style="margin-bottom:22px">
+      <input type="search" id="prSearch" placeholder="Search subjects or chapters…" aria-label="Search subjects or chapters" />
+      <select id="prDiff" aria-label="Difficulty">
+        <option value="all">Any difficulty</option><option>Easy</option><option>Medium</option><option>Hard</option>
+      </select>
+      <div class="spacer"></div>
+      <button type="button" class="btn btn-outline" id="prClear">Clear</button>
+    </div>
+
+    <div id="practiceGrid"></div>
+  </div>
+</section>
+
+<div id="site-footer"></div>
+
+<script src="shared.js"></script>
+<script>renderMastery(document.getElementById("masteryBox"));</script>
+<script>
+(function () {
+  const prSearch = document.getElementById('prSearch');
+  const prDiff = document.getElementById('prDiff');
+  const grid = document.getElementById('practiceGrid');
+
+  function countFor(subject, chapter, diff) {
+    return QUESTIONS.filter(q => q.subject === subject && (!chapter || q.chapter === chapter) && (diff === 'all' || q.diff === diff)).length;
+  }
+  function link(subject, chapter, diff) {
+    const p = new URLSearchParams({ mode: 'practice', subject });
+    if (chapter) p.set('chapter', chapter);
+    if (diff !== 'all') p.set('diff', diff);
+    return 'test-attempt.html?' + p.toString();
+  }
+
+  function render() {
+    const q = prSearch.value.trim().toLowerCase();
+    const diff = prDiff.value;
+    const filtered = PRACTICE_TOPICS.map(t => ({
+      ...t,
+      chapters: t.chapters.filter(c => !q || c.toLowerCase().includes(q) || t.subject.toLowerCase().includes(q))
+    })).filter(t => t.chapters.length);
+
+    if (!filtered.length) {
+      grid.innerHTML = `<div class="empty"><h3>No chapters match</h3><p>Try a different search.</p></div>`;
+      return;
+    }
+
+    grid.innerHTML = filtered.map(t => {
+      const total = countFor(t.subject, null, diff);
+      return `
+      <div class="subject-block">
+        <div class="subject-head">
+          <div class="subject-ico">${t.icon}</div>
+          <div>
+            <h3>${escapeHtml(t.subject)}</h3>
+            <div style="font-size:.78rem;color:var(--text-muted)">${t.chapters.length} chapter${t.chapters.length === 1 ? '' : 's'} · ${total} question${total === 1 ? '' : 's'}</div>
+          </div>
+          <div style="margin-left:auto">
+            ${total ? `<a class="btn btn-primary" href="${link(t.subject, null, diff)}">Practice all ${escapeHtml(t.subject)} →</a>` : `<span class="badge-pill badge-premium">No questions yet</span>`}
+          </div>
+        </div>
+        <div class="chapter-chips">
+          ${t.chapters.map(c => {
+            const n = countFor(t.subject, c, diff);
+            return n
+              ? `<a href="${link(t.subject, c, diff)}" class="chapter-chip">${escapeHtml(c)} · ${n} Q →</a>`
+              : `<span class="chapter-chip disabled" title="Questions coming soon">${escapeHtml(c)} · soon</span>`;
+          }).join('')}
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  [prSearch, prDiff].forEach(el => el.addEventListener('input', render));
+  document.getElementById('prClear').addEventListener('click', () => {
+    prSearch.value = ''; prDiff.value = 'all';
+    const ns = document.getElementById('navSearch'); if (ns) ns.value = '';
+    render();
+  });
+  window.onNavSearch = v => { prSearch.value = v; render(); };
+  render();
+})();
+</script>
+</body>
+</html>

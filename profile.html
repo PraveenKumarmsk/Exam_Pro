@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>My Profile — ExamPro</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231e3a8a'/%3E%3Cpath d='M9 22V10h13v3h-9v2h8v3h-8v4z' fill='%23fff'/%3E%3Ccircle cx='24' cy='24' r='4' fill='%237c3aed'/%3E%3C/svg%3E" />
+<script>(function(){try{var t=localStorage.getItem('exampro-theme');if(!t&&window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches)t='dark';if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+<link rel="stylesheet" href="shared.css" />
+<link rel="manifest" href="manifest.json" />
+<meta name="theme-color" content="#1e3a8a" />
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+<meta name="mobile-web-app-capable" content="yes" /><meta name="apple-mobile-web-app-capable" content="yes" /><meta name="apple-mobile-web-app-title" content="ExamPro" />
+</head>
+<body data-page="profile" data-search="Search exams…">
+
+<div id="site-header"></div>
+
+<div class="page-head">
+  <div class="container">
+    <div class="breadcrumb"><a href="index.html">Home</a> / Profile</div>
+    <h1>My Profile</h1>
+    <p>Your details, daily goal, achievements and data. Everything here is stored only on this device.</p>
+  </div>
+</div>
+
+<section class="block">
+  <div class="container" id="content"></div>
+</section>
+
+<div id="site-footer"></div>
+
+<script src="shared.js"></script>
+<script>
+(function () {
+  const root = document.getElementById('content');
+  let user = getUser();
+  if (!user) { needsSignIn(root, 'your profile'); return; }
+
+  const KEYS = ['exampro-user', 'exampro-users', 'exampro-attempts', 'exampro-wrong', 'exampro-bookmarks', 'exampro-notes-read', 'exampro-notes-bm', 'exampro-plan', 'exampro-ca-items', 'exampro-theme', 'exampro-bigtext'];
+
+  function achievements() {
+    const at = getAttempts(), st = overallStats(at), sk = calcStreak(at);
+    const perfect = at.some(a => a.total >= 5 && a.correct === a.total);
+    const subjects = Object.keys(topicStats(at).subj).length;
+    return [
+      { ic: '🚀', t: 'First step', d: 'Finish your first test', ok: at.length >= 1 },
+      { ic: '📚', t: 'Regular', d: 'Finish 10 tests', ok: at.length >= 10 },
+      { ic: '🎯', t: 'Sharp shooter', d: '80%+ score in a test', ok: st.best >= 80 },
+      { ic: '💯', t: 'Perfect score', d: 'Get every answer right', ok: perfect },
+      { ic: '🔥', t: 'On fire', d: '3-day streak', ok: sk.best >= 3 },
+      { ic: '🏆', t: 'Consistent', d: '7-day streak', ok: sk.best >= 7 },
+      { ic: '🧠', t: 'All-rounder', d: 'Answer in 4+ subjects', ok: subjects >= 4 },
+      { ic: '⭐', t: 'Collector', d: 'Bookmark 5 questions', ok: getBookmarks().length >= 5 },
+      { ic: '✅', t: 'Century', d: 'Answer 100 questions', ok: st.attempted >= 100 }
+    ];
+  }
+
+  function render() {
+    user = getUser();
+    const at = getAttempts(), st = overallStats(at), sk = calcStreak(at);
+    const ach = achievements(), got = ach.filter(a => a.ok).length;
+    const plan = store.get('exampro-plan', 'free');
+    root.innerHTML = `
+      <div class="dash-grid">
+        <div>
+          <div class="widget">
+            <div class="row" style="gap:18px;margin-bottom:18px">
+              <div class="avatar-lg">${escapeHtml((user.name || 'U').trim().charAt(0).toUpperCase())}</div>
+              <div><h3 style="font-size:1.3rem">${escapeHtml(user.name)}</h3><div class="muted small">${escapeHtml(user.email || 'No email saved')} · <span class="badge-pill badge-info" style="text-transform:capitalize">${escapeHtml(plan)} plan</span></div></div>
+            </div>
+            <form id="pForm" novalidate>
+              <div class="form-grid">
+                <div class="field"><label for="pName">Full name</label><input id="pName" value="${escapeHtml(user.name)}" required maxlength="60" /><div class="err">Please enter your name.</div></div>
+                <div class="field"><label for="pEmail">Email</label><input id="pEmail" type="email" value="${escapeHtml(user.email || '')}" /><div class="err">Enter a valid email.</div></div>
+                <div class="field"><label for="pExam">Target exam</label><select id="pExam"><option value="">Select an exam…</option>${EXAMS.map(e => `<option${user.exam === e.name ? ' selected' : ''}>${escapeHtml(e.name)}</option>`).join('')}</select></div>
+                <div class="field"><label for="pGoal">Daily goal (questions)</label><select id="pGoal">${[10, 20, 30, 50, 100].map(n => `<option value="${n}"${(+user.goal || 20) === n ? ' selected' : ''}>${n} questions / day</option>`).join('')}</select></div>
+              </div>
+              <div class="row"><button type="submit" class="btn btn-primary">Save changes</button>${user.exam ? `<a class="btn btn-outline" href="exam-detail.html?exam=${encodeURIComponent(user.exam)}">Open ${escapeHtml(user.exam)}</a>` : ''}</div>
+            </form>
+          </div>
+
+          <div class="widget"><h3>Achievements</h3><div class="sub">${got} of ${ach.length} unlocked</div>
+            <div class="ach-grid">${ach.map(a => `<div class="ach${a.ok ? ' got' : ''}"><div class="ic">${a.ic}</div><b>${a.t}</b><small>${a.d}</small></div>`).join('')}</div></div>
+
+          <div class="widget"><h3>Your data</h3><div class="sub">Because there is no server yet, your progress lives in this browser. Export a backup so you never lose it.</div>
+            <div class="row">
+              <button type="button" class="btn btn-outline" id="exportBtn">⬇ Export backup (JSON)</button>
+              <label class="btn btn-outline" style="cursor:pointer">⬆ Import backup<input type="file" id="importFile" accept="application/json,.json" class="hide" /></label>
+            </div>
+            <hr style="border:none;border-top:1px solid var(--border);margin:18px 0" />
+            <div class="row">
+              <button type="button" class="btn btn-outline" id="clearHist" style="color:var(--danger)">Clear test history</button>
+              <button type="button" class="btn btn-outline" id="delAcc" style="color:var(--danger)">Delete profile &amp; all data</button>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="widget"><h3>At a glance</h3><div class="sub">&nbsp;</div>
+            <div class="list-row"><div class="grow">Tests taken</div><strong>${st.attempts}</strong></div>
+            <div class="list-row"><div class="grow">Average score</div><strong>${st.avgPct}%</strong></div>
+            <div class="list-row"><div class="grow">Accuracy</div><strong>${st.accuracy}%</strong></div>
+            <div class="list-row"><div class="grow">Current streak</div><strong>🔥 ${sk.current}</strong></div>
+            <div class="list-row"><div class="grow">Bookmarked questions</div><strong>${getBookmarks().length}</strong></div>
+            <div class="list-row"><div class="grow">Notes marked read</div><strong>${(store.get('exampro-notes-read', []) || []).length}</strong></div>
+            <p style="margin-top:12px"><a href="dashboard.html" style="color:var(--purple-600);font-weight:600;font-size:.86rem">Open dashboard →</a></p></div>
+          <div class="widget"><h3>Preferences</h3><div class="sub">&nbsp;</div>
+            <div class="row between" style="margin-bottom:12px"><span>Dark mode</span><label class="switch"><input type="checkbox" id="darkSw" ${document.documentElement.getAttribute('data-theme') === 'dark' ? 'checked' : ''} /><span></span></label></div>
+            <div class="row between"><span>Larger text in tests</span><label class="switch"><input type="checkbox" id="bigSw" ${store.get('exampro-bigtext', false) ? 'checked' : ''} /><span></span></label></div></div>
+          <div class="widget"><h3>Plan</h3><div class="sub">&nbsp;</div><p class="small muted" style="margin-bottom:10px">You are on the <strong style="text-transform:capitalize">${escapeHtml(plan)}</strong> plan (demo — no payments are connected).</p><a class="btn btn-outline" href="pricing.html">See plans</a></div>
+        </div>
+      </div>`;
+
+    document.getElementById('pForm').addEventListener('submit', e => {
+      e.preventDefault();
+      const name = document.getElementById('pName').value.trim(), email = document.getElementById('pEmail').value.trim().toLowerCase();
+      let ok = true;
+      const nf = document.getElementById('pName').closest('.field'), ef = document.getElementById('pEmail').closest('.field');
+      nf.classList.toggle('bad', !name); if (!name) ok = false;
+      const badMail = email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email); ef.classList.toggle('bad', !!badMail); if (badMail) ok = false;
+      if (!ok) return;
+      /* keep the users table in step if the email changed */
+      if (user.email && email !== user.email) { const t = store.get('exampro-users', {}) || {}; delete t[user.email]; store.set('exampro-users', t); }
+      setUser({ name, email, exam: document.getElementById('pExam').value, goal: +document.getElementById('pGoal').value });
+      showToast('Profile saved'); render();
+    });
+
+    document.getElementById('exportBtn').addEventListener('click', () => {
+      const dump = { app: 'ExamPro', version: 2, exported: new Date().toISOString(), data: {} };
+      KEYS.forEach(k => { try { const v = localStorage.getItem(k); if (v !== null) dump.data[k] = v; } catch (e) {} });
+      downloadFile('exampro-backup-' + dayKey(new Date()) + '.json', JSON.stringify(dump, null, 2), 'application/json');
+      showToast('Backup downloaded');
+    });
+    document.getElementById('importFile').addEventListener('change', e => {
+      const f = e.target.files[0]; if (!f) return;
+      const r = new FileReader();
+      r.onload = () => {
+        try {
+          const d = JSON.parse(r.result);
+          if (!d || d.app !== 'ExamPro' || !d.data) throw new Error('bad file');
+          if (!confirm('Import this backup? It will replace the data currently saved on this device.')) return;
+          Object.keys(d.data).filter(k => KEYS.includes(k)).forEach(k => { try { localStorage.setItem(k, d.data[k]); } catch (e) {} });
+          showToast('Backup imported'); setTimeout(() => location.reload(), 600);
+        } catch (err) { showToast('That file is not a valid ExamPro backup.'); }
+      };
+      r.readAsText(f);
+    });
+    document.getElementById('clearHist').addEventListener('click', () => {
+      if (confirm('Delete all saved test attempts, wrong-answer list and bookmarks from this device?')) { store.del('exampro-attempts'); store.del('exampro-wrong'); store.del('exampro-bookmarks'); store.del('exampro-session'); showToast('History cleared'); render(); }
+    });
+    document.getElementById('delAcc').addEventListener('click', () => {
+      if (confirm('Delete your profile and ALL data saved on this device? This cannot be undone.')) { KEYS.filter(k => k !== 'exampro-theme').forEach(k => store.del(k)); store.del('exampro-session'); showToast('Everything deleted'); setTimeout(() => { location.href = 'index.html'; }, 700); }
+    });
+    document.getElementById('darkSw').addEventListener('change', e => {
+      const v = e.target.checked ? 'dark' : 'light'; document.documentElement.setAttribute('data-theme', v); try { localStorage.setItem('exampro-theme', v); } catch (x) {}
+    });
+    document.getElementById('bigSw').addEventListener('change', e => { store.set('exampro-bigtext', e.target.checked); });
+  }
+  render();
+})();
+</script>
+</body>
+</html>

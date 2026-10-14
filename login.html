@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Login — ExamPro</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231e3a8a'/%3E%3Cpath d='M9 22V10h13v3h-9v2h8v3h-8v4z' fill='%23fff'/%3E%3Ccircle cx='24' cy='24' r='4' fill='%237c3aed'/%3E%3C/svg%3E" />
+<script>(function(){try{var t=localStorage.getItem('exampro-theme');if(!t&&window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches)t='dark';if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+<link rel="stylesheet" href="shared.css" />
+<link rel="manifest" href="manifest.json" />
+<meta name="theme-color" content="#1e3a8a" />
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+<meta name="mobile-web-app-capable" content="yes" /><meta name="apple-mobile-web-app-capable" content="yes" /><meta name="apple-mobile-web-app-title" content="ExamPro" />
+</head>
+<body data-page="login" data-search="Search exams…">
+
+<div id="site-header"></div>
+
+<div class="login-wrap">
+  <div class="login-side">
+    <h2>Join ExamPro</h2>
+    <p>Start practising with exam-wise mock tests, custom tests, and detailed analytics.</p>
+    <ul>
+      <li>Free full-length mock tests</li>
+      <li>Custom test builder</li>
+      <li>Subject &amp; chapter-wise practice</li>
+      <li>Detailed performance analysis</li>
+      <li>Previous year papers (as they become available)</li>
+    </ul>
+  </div>
+
+  <div class="login-form">
+    <div class="dev-note">
+      ⚠️ <strong>Development mode:</strong> authentication is not wired to a backend yet. Submitting these forms simulates a sign-in by saving your name on this device only. No password is stored or sent anywhere.
+    </div>
+
+    <div class="info-note" id="alreadyIn" style="display:none">
+      <span id="alreadyText"></span>
+      <span><a href="results.html" class="btn btn-outline" style="padding:6px 12px;font-size:.8rem">My results</a></span>
+    </div>
+
+    <div id="loginView">
+      <h2>Welcome back</h2>
+      <p class="sub">Sign in to continue practising.</p>
+      <form id="loginForm">
+        <div class="field"><label for="lEmail">Email</label><input type="email" id="lEmail" required placeholder="you@example.com" autocomplete="email" /></div>
+        <div class="field"><label for="lPass">Password</label><input type="password" id="lPass" required placeholder="••••••••" autocomplete="current-password" /></div>
+        <button type="submit" class="btn btn-primary btn-lg" style="width:100%">Sign In</button>
+      </form>
+      <p class="switch-link">New here? <button type="button" id="toSignup">Create an account</button></p>
+    </div>
+
+    <div id="signupView" style="display:none">
+      <h2>Create your account</h2>
+      <p class="sub">Free to start. No credit card required.</p>
+      <form id="signupForm">
+        <div class="field"><label for="sName">Full name</label><input type="text" id="sName" required placeholder="Your name" autocomplete="name" /></div>
+        <div class="field"><label for="sEmail">Email</label><input type="email" id="sEmail" required placeholder="you@example.com" autocomplete="email" /></div>
+        <div class="field"><label for="sPass">Password</label><input type="password" id="sPass" required minlength="8" placeholder="At least 8 characters" autocomplete="new-password" /></div>
+        <div class="field">
+          <label for="sExam">Target exam (optional)</label>
+          <select id="sExam"><option value="">Select an exam…</option></select>
+        </div>
+        <button type="submit" class="btn btn-primary btn-lg" style="width:100%">Create Account</button>
+      </form>
+      <p class="switch-link">Already have an account? <button type="button" id="toLogin">Sign in</button></p>
+    </div>
+  </div>
+</div>
+
+<div id="site-footer"></div>
+
+<script src="shared.js"></script>
+<script>
+(function () {
+  const loginView = document.getElementById('loginView');
+  const signupView = document.getElementById('signupView');
+
+  function showSignup() { loginView.style.display = 'none'; signupView.style.display = 'block'; history.replaceState(null, '', location.pathname + location.search + '#signup'); }
+  function showLogin()  { signupView.style.display = 'none'; loginView.style.display = 'block'; history.replaceState(null, '', location.pathname + location.search + '#login'); }
+  function syncFromHash() { if (location.hash === '#signup') { loginView.style.display = 'none'; signupView.style.display = 'block'; } else { signupView.style.display = 'none'; loginView.style.display = 'block'; } }
+
+  document.getElementById('toSignup').addEventListener('click', showSignup);
+  document.getElementById('toLogin').addEventListener('click', showLogin);
+  window.addEventListener('hashchange', syncFromHash);
+  syncFromHash();
+
+  /* populate exam select */
+  const sExam = document.getElementById('sExam');
+  EXAMS.forEach(e => sExam.insertAdjacentHTML('beforeend', `<option>${escapeHtml(e.name)}</option>`));
+
+  /* already signed in? */
+  const current = getUser();
+  if (current) {
+    document.getElementById('alreadyText').textContent = 'You are already signed in as ' + current.name + '.';
+    document.getElementById('alreadyIn').style.display = 'flex';
+  }
+
+  /* where to go after sign-in — only same-site .html pages are allowed */
+  const next = new URLSearchParams(location.search).get('next');
+  const safeNext = next && /^[a-z0-9\-]+\.html(\?[^\s]*)?$/i.test(next) ? next : 'dashboard.html';
+
+  function signIn(user) {
+    store.set('exampro-user', user);
+    showToast('Welcome, ' + user.name + '!');
+    setTimeout(() => { location.href = safeNext; }, 700);
+  }
+
+  document.getElementById('loginForm').addEventListener('submit', e => {
+    e.preventDefault();
+    const email = document.getElementById('lEmail').value.trim().toLowerCase();
+    const users = store.get('exampro-users', {});
+    const rec = users && users[email];
+    const fallback = email.split('@')[0] || 'Student';
+    signIn({ name: rec && rec.name ? rec.name : fallback, email, exam: rec ? rec.exam || '' : '' });
+  });
+
+  document.getElementById('signupForm').addEventListener('submit', e => {
+    e.preventDefault();
+    const name = document.getElementById('sName').value.trim();
+    const email = document.getElementById('sEmail').value.trim().toLowerCase();
+    const exam = document.getElementById('sExam').value;
+    if (!name) { showToast('Please enter your name'); return; }
+    const users = store.get('exampro-users', {}) || {};
+    users[email] = { name, exam };
+    store.set('exampro-users', users); track('login');
+    signIn({ name, email, exam });
+  });
+})();
+</script>
+</body>
+</html>

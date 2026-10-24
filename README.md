@@ -81,3 +81,11 @@ Any Node 22.13+ host: set env vars from `.env.example`, `NODE_ENV=production`, `
 
 ## Cleanup report
 Nothing was deleted: `test.html` and `info.html` are small redirect shims for old links (not referenced by the site but kept for backward compatibility); the old admin editor `admin.html` is a different feature from the new admin dashboard and is linked from it.
+
+## 📄 License
+
+Copyright © 2026 Praveen Kumar. All Rights Reserved.
+
+This project is proprietary. Unauthorized copying, modification, distribution, or commercial use of the source code is prohibited without prior written permission from the copyright owner.
+
+For more information, see the [LICENSE](LICENSE) file.
